@@ -43,18 +43,16 @@ int main() {
 	/* Init view and projection */
 
 	Model m1;
-	load_model(&m1, program, combine_string(tmp_models_path, "cube_1.model"));
+	load_model(&m1, program, combine_string(tmp_models_path, "sphere.model"));
 	translate_model(&m1, 0, -2, 0);
 
 	Light l1;
 	load_light(&l1, light_program, combine_string(tmp_models_path, "light_cube.model"));
 	translate_light(&l1, +3, +5, -5);
 
-	Vector3 objectColor, lightColor, lightPos, viewPos;
-	init_vector(&objectColor, 1.0f, 0.5f, 0.31f);
+	Vector3 objectColor, lightColor;
+	init_vector(&objectColor, 0.1f, 0.8f, 0.1f);
 	init_vector(&lightColor, 1.0f, 1.0f, 1.0f);
-	copy_vector(&lightPos, &l1.position);
-	copy_vector(&viewPos, &position);
 
 	while (!glfwWindowShouldClose(window)) {
 		process_input(window);
@@ -69,11 +67,18 @@ int main() {
 		set_matrix4(light_program, "view", &view);
 		set_matrix4(light_program, "projection", &projection);
 
+		/* Moving the light */
+		const float radius = 5.0f;
+		float light_x = sin(glfwGetTime()) * radius;
+		float light_z = cos(glfwGetTime()) * radius;
+		translate_light(&l1, light_x, +5, light_z);
+		/* Moving the light */
+
 		glUseProgram(m1.program);
 		set_vector3(m1.program, "objectColor", &objectColor);
 		set_vector3(m1.program, "lightColor", &lightColor);
-		set_vector3(m1.program, "lightPos", &lightPos);
-		set_vector3(m1.program, "viewPos", &viewPos);
+		set_vector3(m1.program, "lightPos", &l1.position);
+		set_vector3(m1.program, "viewPos", &position);
 
 		draw_model(&m1);
 		draw_light(&l1);
@@ -150,7 +155,7 @@ GLFWwindow* init_gl_and_window(const char *title, uint16_t window_width, uint16_
 	/* Mouse */
 
 	/* glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); */
-
+	glEnable(GL_DEPTH_TEST);
 	glfwSwapInterval(1);
 
 	return window;
