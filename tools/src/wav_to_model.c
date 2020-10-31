@@ -158,14 +158,15 @@ void pack_into_structs(Data *data, SplitStrings *split_strs) {
 }
 
 void save_model(Data *data, const char* filename) {
-	uint16_t num_floats = 0;
+	uint32_t num_floats = 0;
 
 	/* Calculating number of floats */
+	/* @Note: 3 for the co-ordinates and 3 for the normals := 6 */
 	for(uint16_t i = 0; i < data->i_len; ++i) {
 		if(data->infos[i].len == 4)
-			num_floats += (data->infos[i].len + 2) * 3;
+			num_floats += (data->infos[i].len + 2) * 6;
 		else
-			num_floats += data->infos[i].len	* 3;
+			num_floats += data->infos[i].len	* 6;
 	}
 	/* Calculating number of floats */
 
@@ -174,7 +175,7 @@ void save_model(Data *data, const char* filename) {
 		printf("File %s not found\n", filename);
 	}
 	else {
-		fprintf(file, "%d", num_floats);
+		fprintf(file, "%u", num_floats);
 
 		for(uint32_t i = 0; i < data->i_len; ++i) {
 			if(data->infos[i].len == 4) {
@@ -182,29 +183,43 @@ void save_model(Data *data, const char* filename) {
 				uint16_t vi_2 = data->infos[i].vertex_numbers[1] - 1;
 				uint16_t vi_3 = data->infos[i].vertex_numbers[2] - 1;
 				uint16_t vi_4 = data->infos[i].vertex_numbers[3] - 1;
+				uint16_t ni_1 = data->infos[i].normal_numbers[0] - 1; 
+				uint16_t ni_2 = data->infos[i].normal_numbers[1] - 1;
+				uint16_t ni_3 = data->infos[i].normal_numbers[2] - 1;
+				uint16_t ni_4 = data->infos[i].normal_numbers[3] - 1;
 				Vector3 *v1 = &data->vertices[vi_1];
 				Vector3 *v2 = &data->vertices[vi_2];
 				Vector3 *v3 = &data->vertices[vi_3];
 				Vector3 *v4 = &data->vertices[vi_4];
+				Vector3 *n1 = &data->vertex_normals[ni_1];
+				Vector3 *n2 = &data->vertex_normals[ni_2];
+				Vector3 *n3 = &data->vertex_normals[ni_3];
+				Vector3 *n4 = &data->vertex_normals[ni_4];
 
-				fprintf(file, "\n%+.3f %+.3f %+.3f", v1->a, v1->b, v1->c);
-				fprintf(file, "\n%+.3f %+.3f %+.3f", v2->a, v2->b, v2->c);
-				fprintf(file, "\n%+.3f %+.3f %+.3f", v3->a, v3->b, v3->c);
-				fprintf(file, "\n%+.3f %+.3f %+.3f", v1->a, v1->b, v1->c);
-				fprintf(file, "\n%+.3f %+.3f %+.3f", v4->a, v4->b, v4->c);
-				fprintf(file, "\n%+.3f %+.3f %+.3f", v3->a, v3->b, v3->c);
+				fprintf(file, "\n%+.3f %+.3f %+.3f %+.3f %+.3f %+.3f", v1->a, v1->b, v1->c, n1->a, n1->b, n1->c);
+				fprintf(file, "\n%+.3f %+.3f %+.3f %+.3f %+.3f %+.3f", v2->a, v2->b, v2->c, n2->a, n2->b, n2->c);
+				fprintf(file, "\n%+.3f %+.3f %+.3f %+.3f %+.3f %+.3f", v3->a, v3->b, v3->c, n3->a, n3->b, n3->c);
+				fprintf(file, "\n%+.3f %+.3f %+.3f %+.3f %+.3f %+.3f", v1->a, v1->b, v1->c, n1->a, n1->b, n1->c);
+				fprintf(file, "\n%+.3f %+.3f %+.3f %+.3f %+.3f %+.3f", v4->a, v4->b, v4->c, n4->a, n4->b, n4->c);
+				fprintf(file, "\n%+.3f %+.3f %+.3f %+.3f %+.3f %+.3f", v3->a, v3->b, v3->c, n3->a, n3->b, n3->c);
 			}
 			else if(data->infos[i].len == 3) {
 				uint16_t vi_1 = data->infos[i].vertex_numbers[0] - 1; 
 				uint16_t vi_2 = data->infos[i].vertex_numbers[1] - 1;
 				uint16_t vi_3 = data->infos[i].vertex_numbers[2] - 1;
+				uint16_t ni_1 = data->infos[i].normal_numbers[0] - 1; 
+				uint16_t ni_2 = data->infos[i].normal_numbers[1] - 1;
+				uint16_t ni_3 = data->infos[i].normal_numbers[2] - 1;
 				Vector3 *v1 = &data->vertices[vi_1];
 				Vector3 *v2 = &data->vertices[vi_2];
 				Vector3 *v3 = &data->vertices[vi_3];
+				Vector3 *n1 = &data->vertex_normals[ni_1];
+				Vector3 *n2 = &data->vertex_normals[ni_2];
+				Vector3 *n3 = &data->vertex_normals[ni_3];
 
-				fprintf(file, "\n%+.3f %+.3f %+.3f", v1->a, v1->b, v1->c);
-				fprintf(file, "\n%+.3f %+.3f %+.3f", v2->a, v2->b, v2->c);
-				fprintf(file, "\n%+.3f %+.3f %+.3f", v3->a, v3->b, v3->c);
+				fprintf(file, "\n%+.3f %+.3f %+.3f %+.3f %+.3f %+.3f", v1->a, v1->b, v1->c, n1->a, n1->b, n1->c);
+				fprintf(file, "\n%+.3f %+.3f %+.3f %+.3f %+.3f %+.3f", v2->a, v2->b, v2->c, n2->a, n2->b, n2->c);
+				fprintf(file, "\n%+.3f %+.3f %+.3f %+.3f %+.3f %+.3f", v3->a, v3->b, v3->c, n3->a, n3->b, n3->c);
 			}
 		}
 

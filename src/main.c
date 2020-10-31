@@ -7,6 +7,7 @@
 #include "utils.h"
 #include "math.h" /* For testing the model */
 #include "model.h"
+#include "light.h"
 
 void framebuffer_size_callback(GLFWwindow*, int, int);
 void process_input(GLFWwindow*);
@@ -30,18 +31,30 @@ int main() {
 	uint16_t window_height = 900;
 	GLFWwindow *window = init_gl_and_window("CommercialProject", window_width, window_height);
 	GLuint program = compile_shader(combine_string(shaders_path, "v_shader.shader"), combine_string(shaders_path, "f_shader.shader"));
+	GLuint light_program = compile_shader(combine_string(shaders_path, "v_light.shader"), combine_string(shaders_path, "f_light.shader"));
 
 	/* Init view and projection */
 	Matrix4 view, projection;
 	init_vector(&front, 0, 0, -1);
-	init_vector(&position, 0, 0, 5);
+	init_vector(&position, 0, 0, 10);
 	init_vector(&up, 0, 1, 0);
 	make_identity(&view);
 	projection = perspective(45.0f, (float)window_width / window_height, 0.1f, 500.0f);
 	/* Init view and projection */
 
 	Model m1;
-	load_model(&m1, program, combine_string(tmp_models_path, "sphere.model"));
+	load_model(&m1, program, combine_string(tmp_models_path, "cube_1.model"));
+	translate_model(&m1, 0, -2, 0);
+
+	Light l1;
+	load_light(&l1, light_program, combine_string(tmp_models_path, "light_cube.model"));
+	translate_light(&l1, +3, +5, -5);
+
+	Vector3 objectColor, lightColor, lightPos, viewPos;
+	init_vector(&objectColor, 1.0f, 0.5f, 0.31f);
+	init_vector(&lightColor, 1.0f, 1.0f, 1.0f);
+	copy_vector(&lightPos, &l1.position);
+	copy_vector(&viewPos, &position);
 
 	while (!glfwWindowShouldClose(window)) {
 		process_input(window);
@@ -53,8 +66,17 @@ int main() {
 		view = look_at(&position, &pos_plus_front, &up);
 		set_matrix4(program, "view", &view);
 		set_matrix4(program, "projection", &projection);
+		set_matrix4(light_program, "view", &view);
+		set_matrix4(light_program, "projection", &projection);
+
+		glUseProgram(m1.program);
+		set_vector3(m1.program, "objectColor", &objectColor);
+		set_vector3(m1.program, "lightColor", &lightColor);
+		set_vector3(m1.program, "lightPos", &lightPos);
+		set_vector3(m1.program, "viewPos", &viewPos);
 
 		draw_model(&m1);
+		draw_light(&l1);
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
@@ -127,7 +149,7 @@ GLFWwindow* init_gl_and_window(const char *title, uint16_t window_width, uint16_
 	glfwSetScrollCallback(window, scroll_callback);
 	/* Mouse */
 
-	// glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	/* glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); */
 
 	glfwSwapInterval(1);
 
