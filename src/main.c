@@ -6,6 +6,7 @@
 #include "shader.h"
 #include "utils.h"
 #include "math.h" /* For testing the model */
+#include "model.h"
 
 void framebuffer_size_callback(GLFWwindow*, int, int);
 void process_input(GLFWwindow*);
@@ -22,38 +23,25 @@ static float camera_speed = 0.5f;
 static float zoom_speed = 1.0f;
 const char* assets_path = "..\\data\\";
 const char* shaders_path = "..\\shaders\\";
+const char* tmp_models_path = "..\\tools\\data_out\\";
 
 int main() {
-	uint16_t window_width = 800;
-	uint16_t window_height = 600;
+	uint16_t window_width = 1440;
+	uint16_t window_height = 900;
 	GLFWwindow *window = init_gl_and_window("CommercialProject", window_width, window_height);
-	uint8_t program = compile_shader(combine_string(shaders_path, "v_shader.shader"), combine_string(shaders_path, "f_shader.shader"));
+	GLuint program = compile_shader(combine_string(shaders_path, "v_shader.shader"), combine_string(shaders_path, "f_shader.shader"));
 
 	/* Init view and projection */
 	Matrix4 view, projection;
 	init_vector(&front, 0, 0, -1);
 	init_vector(&position, 0, 0, 5);
 	init_vector(&up, 0, 1, 0);
-
 	make_identity(&view);
 	projection = perspective(45.0f, (float)window_width / window_height, 0.1f, 500.0f);
 	/* Init view and projection */
 
-	/* Sample */
-	float vertices[108];
-	read_floats_from_file(combine_string(assets_path, "vertices/cuboid_vertices.dat"), vertices);
-
-	GLuint vao, vbo;
-	glGenVertexArrays(1, &vao);
-	glGenBuffers(1, &vbo);
-	glBindVertexArray(vao);
-	glBindBuffer(GL_ARRAY_BUFFER, vbo);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_TRUE, 3 * sizeof(float), (void*)0);
-	glEnableVertexAttribArray(0);
-
-	Matrix4 model;
-	/* Sample */
+	Model m1;
+	load_model(&m1, program, combine_string(tmp_models_path, "sphere.model"));
 
 	while (!glfwWindowShouldClose(window)) {
 		process_input(window);
@@ -66,11 +54,7 @@ int main() {
 		set_matrix4(program, "view", &view);
 		set_matrix4(program, "projection", &projection);
 
-		glUseProgram(program);
-		make_identity(&model);
-		set_matrix4(program, "model", &model);
-		glBindVertexArray(vao);
-		glDrawArrays(GL_TRIANGLES, 0, 36);
+		draw_model(&m1);
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
@@ -130,6 +114,7 @@ GLFWwindow* init_gl_and_window(const char *title, uint16_t window_width, uint16_
 	glfwWindowHint(GLFW_SAMPLES, 1);
 
 	GLFWwindow *window = glfwCreateWindow(window_width, window_height, title, NULL, NULL);
+	glfwMaximizeWindow(window);
 	glfwMakeContextCurrent(window);
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 	gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
@@ -142,7 +127,7 @@ GLFWwindow* init_gl_and_window(const char *title, uint16_t window_width, uint16_
 	glfwSetScrollCallback(window, scroll_callback);
 	/* Mouse */
 
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	// glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 	glfwSwapInterval(1);
 

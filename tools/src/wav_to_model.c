@@ -4,6 +4,7 @@
 #include <stdlib.h>
 
 #define BUFFER_SIZE 32768
+#define ARRAY_SIZE 8192
 
 typedef struct Vector3 {
 	float a, b, c;
@@ -16,12 +17,12 @@ typedef struct Vector2 {
 typedef struct Info {
 	uint16_t vertex_numbers[4];
 	uint16_t normal_numbers[4];
-	uint8_t len; /* len may wary from 1 to 4 */
+	uint16_t len; /* len may wary from 1 to 4 */
 } Info;
 
 typedef struct Strings {
 	char strings[10][128];
-	uint8_t len;
+	uint16_t len;
 } Strings;
 
 typedef struct SplitStrings {
@@ -30,15 +31,16 @@ typedef struct SplitStrings {
 } SplitStrings;
 
 typedef struct Data {
-	Vector3 vertices[1024];
-	Vector3 vertex_normals[1024];
-	Info infos[512];
-	uint16_t v_len;
-	uint16_t n_len;
-	uint16_t i_len;
+	Vector3 vertices[ARRAY_SIZE];
+	Vector3 vertex_normals[ARRAY_SIZE];
+	Info infos[ARRAY_SIZE];
+	uint32_t v_len;
+	uint32_t n_len;
+	uint32_t i_len;
 } Data;
 
 void pack_into_structs(Data *data, SplitStrings *split_strs);
+void save_model(Data*, const char*);
 
 int main(int argc, char** argv) {
 	if(argc != 2) {
@@ -62,7 +64,7 @@ int main(int argc, char** argv) {
 			split_strs.len = 0;
 			split_strs.strings = (Strings*)malloc(sizeof(Strings) * BUFFER_SIZE);
 
-			printf("-- Parsing file '%s' of size: %zu\n", argv[1], filesize);
+			printf("-- Parsing file '%s' of size: %zu bytes\n", argv[1], filesize);
 			while(fgets(buffer, line_sz, file)) {
 				/* Deleting the newline character */
 				const size_t len = strlen(buffer);
@@ -71,7 +73,7 @@ int main(int argc, char** argv) {
 				/* Deleting the newline character */
 
 				/* Split string and Copy*/
-				uint8_t str_index = 0;
+				uint16_t str_index = 0;
 				char* pch = strtok(buffer, " ");
 				while(pch != NULL) {
 					strcpy(split_strs.strings[split_strs.len].strings[str_index++], pch);
@@ -86,6 +88,16 @@ int main(int argc, char** argv) {
 			Data data;
 			pack_into_structs(&data, &split_strs);
 			free(split_strs.strings);
+
+			/* Saving */
+			char* pch = strtok(argv[1], ".");
+			pch = strtok(pch, "\\");
+			pch = strtok(NULL, "\\");
+			char filename[25] = "..\\data_out\\";
+			strcat(filename, pch);
+			strcat(filename, ".model");
+			save_model(&data, filename);
+			/* Saving */
 		}
 
 		fclose(file);
@@ -122,12 +134,17 @@ void pack_into_structs(Data *data, SplitStrings *split_strs) {
 		}
 		else if(strcmp(str, "f") == 0) {
 			data->infos[data->i_len].len = split_strs->strings[i].len - 1;
-			for(uint8_t j = 1; j < split_strs->strings[i].len; ++j) {
+			for(uint16_t j = 1; j < split_strs->strings[i].len; ++j) {
 				/* Split string */
 				char *s = split_strs->strings[i].strings[j];
 				char* s1 = strtok(s, "/");
 				char* s2 = strtok(NULL, "/");
 				char* s3 = strtok(NULL, "/");
+
+				if(s3 == NULL) {
+					s3 = s2;
+					s2 = NULL;
+				}
 
 				uint16_t vertex_index = strtof(s1, NULL);
 				uint16_t normals_index = strtof(s3, NULL);
@@ -138,21 +155,60 @@ void pack_into_structs(Data *data, SplitStrings *split_strs) {
 			data->i_len += 1;
 		}
 	}
+}
 
-	for(uint16_t i = 0; i < data->v_len; ++i) {
-		printf("v: %.2f %.2f %.2f\n", data->vertices[i].a, data->vertices[i].b, data->vertices[i].c);
-	}
-	printf("\n");
-	for(uint16_t i = 0; i < data->n_len; ++i) {
-		printf("n: %.2f %.2f %.2f\n", data->vertex_normals[i].a, data->vertex_normals[i].b, data->vertex_normals[i].c);
-	}
-	printf("\n");
+void save_model(Data *data, const char* filename) {
+	uint16_t num_floats = 0;
+
+	/* Calculating number of floats */
 	for(uint16_t i = 0; i < data->i_len; ++i) {
-		for(uint8_t j = 0; j < data->infos[i].len; ++j)
-			printf("v: %d ", data->infos[i].vertex_numbers[j]);
-		printf("\n");
-		for(uint8_t j = 0; j < data->infos[i].len; ++j)
-			printf("n: %d ", data->infos[i].normal_numbers[j]);
-		printf("\n");
+		if(data->infos[i].len == 4)
+			num_floats += (data->infos[i].len + 2) * 3;
+		else
+			num_floats += data->infos[i].len	* 3;
+	}
+	/* Calculating number of floats */
+
+	FILE *file = fopen(filename, "w");
+	if(!file) {
+		printf("File %s not found\n", filename);
+	}
+	else {
+		fprintf(file, "%d", num_floats);
+
+		for(uint32_t i = 0; i < data->i_len; ++i) {
+			if(data->infos[i].len == 4) {
+				uint16_t vi_1 = data->infos[i].vertex_numbers[0] - 1; 
+				uint16_t vi_2 = data->infos[i].vertex_numbers[1] - 1;
+				uint16_t vi_3 = data->infos[i].vertex_numbers[2] - 1;
+				uint16_t vi_4 = data->infos[i].vertex_numbers[3] - 1;
+				Vector3 *v1 = &data->vertices[vi_1];
+				Vector3 *v2 = &data->vertices[vi_2];
+				Vector3 *v3 = &data->vertices[vi_3];
+				Vector3 *v4 = &data->vertices[vi_4];
+
+				fprintf(file, "\n%+.3f %+.3f %+.3f", v1->a, v1->b, v1->c);
+				fprintf(file, "\n%+.3f %+.3f %+.3f", v2->a, v2->b, v2->c);
+				fprintf(file, "\n%+.3f %+.3f %+.3f", v3->a, v3->b, v3->c);
+				fprintf(file, "\n%+.3f %+.3f %+.3f", v1->a, v1->b, v1->c);
+				fprintf(file, "\n%+.3f %+.3f %+.3f", v4->a, v4->b, v4->c);
+				fprintf(file, "\n%+.3f %+.3f %+.3f", v3->a, v3->b, v3->c);
+			}
+			else if(data->infos[i].len == 3) {
+				uint16_t vi_1 = data->infos[i].vertex_numbers[0] - 1; 
+				uint16_t vi_2 = data->infos[i].vertex_numbers[1] - 1;
+				uint16_t vi_3 = data->infos[i].vertex_numbers[2] - 1;
+				Vector3 *v1 = &data->vertices[vi_1];
+				Vector3 *v2 = &data->vertices[vi_2];
+				Vector3 *v3 = &data->vertices[vi_3];
+
+				fprintf(file, "\n%+.3f %+.3f %+.3f", v1->a, v1->b, v1->c);
+				fprintf(file, "\n%+.3f %+.3f %+.3f", v2->a, v2->b, v2->c);
+				fprintf(file, "\n%+.3f %+.3f %+.3f", v3->a, v3->b, v3->c);
+			}
+		}
+
+		printf("-- Saved to %s\n", filename);
+		fclose(file);
 	}
 }
