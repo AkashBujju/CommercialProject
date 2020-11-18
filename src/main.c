@@ -1,5 +1,5 @@
-#include <glad\glad.h>
-#include <GLFW\glfw3.h>
+#include <glad/glad.h>
+#include <GLFW/glfw3.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <math.h>
@@ -11,7 +11,7 @@
 
 void framebuffer_size_callback(GLFWwindow*, int, int);
 void process_input(GLFWwindow*);
-GLFWwindow* init_gl_and_window(const char*, uint16_t, uint16_t);
+GLFWwindow* init_gl_and_window(const char*, uint16_t, uint16_t, uint8_t);
 void mouse_callback(GLFWwindow*, double, double);
 void scroll_callback(GLFWwindow*, double, double);
 
@@ -22,14 +22,14 @@ static float pitch = -40.0f;
 static float last_x, last_y;
 static float camera_speed = 0.5f;
 static float zoom_speed = 1.0f;
-const char* assets_path = "..\\data\\";
-const char* shaders_path = "..\\shaders\\";
-const char* tmp_models_path = "..\\tools\\data_out\\";
+const char* assets_path = "../data/";
+const char* shaders_path = "../shaders/";
+const char* tmp_models_path = "../tools/data_out/";
 
 int main() {
-	uint16_t window_width = 1440;
-	uint16_t window_height = 900;
-	GLFWwindow *window = init_gl_and_window("CommercialProject", window_width, window_height);
+	uint16_t window_width = 1024;
+	uint16_t window_height = 768;
+	GLFWwindow *window = init_gl_and_window("CommercialProject", window_width, window_height, 0);
 	GLuint program = compile_shader(combine_string(shaders_path, "v_shader.shader"), combine_string(shaders_path, "f_shader.shader"));
 	GLuint light_program = compile_shader(combine_string(shaders_path, "v_light.shader"), combine_string(shaders_path, "f_light.shader"));
 
@@ -133,15 +133,19 @@ void process_input(GLFWwindow *window) {
 	}
 }
 
-GLFWwindow* init_gl_and_window(const char *title, uint16_t window_width, uint16_t window_height) {
+GLFWwindow* init_gl_and_window(const char *title, uint16_t window_width, uint16_t window_height, uint8_t maximize_window) {
 	glfwInit();
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+#ifdef __APPLE__
+	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+#endif
 	glfwWindowHint(GLFW_SAMPLES, 1);
 
 	GLFWwindow *window = glfwCreateWindow(window_width, window_height, title, NULL, NULL);
-	glfwMaximizeWindow(window);
+	if(maximize_window)
+		glfwMaximizeWindow(window);
 	glfwMakeContextCurrent(window);
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 	gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);

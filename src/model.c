@@ -29,7 +29,7 @@ void load_model(Model *model, GLuint program, const char* model_filename) {
 		glGenBuffers(1, &model->vbo);
 		glBindVertexArray(model->vao);
 		glBindBuffer(GL_ARRAY_BUFFER, model->vbo);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(vertices) * num_floats, vertices, GL_STATIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(float) * num_floats, vertices, GL_STATIC_DRAW);
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_TRUE, 6 * sizeof(float), (void*)0);
 		glEnableVertexAttribArray(0);
 		glVertexAttribPointer(1, 3, GL_FLOAT, GL_TRUE, 6 * sizeof(float), (void*)(3 * sizeof(float)));

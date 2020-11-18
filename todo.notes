@@ -1,0 +1,94 @@
+ToDo:
+* Game design document
+* Design some puzzles and problems
+* Experiment with loading models
+* Experiment with bone animations
+* Program the level editor
+* Try to draw the models
+
+- Shift the work env. to MacOS
+- Load the cone model
+
+
+Time available:
+ - 1 November 2020 to 1 July 2021
+ - Today 18 Nov 2020
+ - Days remaining 224
+
+
+Plan is as follows:
+===================
+
+* Genres:
+  - Puzzle
+  - Management
+  - Problem solving
+
+* Platforms:
+  - PC (Steam)
+
+* Pricing:
+  - Free on Steam
+
+* Languages:
+  - C/C++
+
+
+Questions to ask:
+* What if I could ???
+* What truth should it present to the player
+* What is the logical contradiction
+* What are the assumptions
+* How to present the puzzle
+* What is the goal of the puzzle
+* What is the learning curve
+
+
+Some tips to design a puzzle:
+1) Make some random rules (no objectives yet!)
+2) Experiment with objectives (iterate and improve your ruleset)
+3) Try to increase the difficulty level
+4) Expand your rules
+5) Reorder and polish
+
+
+Some tips to design a puzzle:
+1) Start with a mechanic
+2) Make a rule
+3) Look for consequences that will lead to a puzzle to illustrate the contradiction
+
+
+Some vague ideas:
+* Program individual movable units to work out a solution to a puzzle
+
+
+The game:
+=========
+* The player has to program individual workers/units to attain a particular goal/task. This program is individual to every unit and each unique unit has special abilities/tasks what they are good at. Also, every level and unit has a certain number of compute units. Therefore your program execution should not use more compute units than you are given. Every action a unit performs will consume some amount of compute depending on the particular task and unit.
+* Actions that various characters can perform:
+  - Move forward, backward, left, right
+* Instructions:
+  - if, else
+  - while
+  - assignment
+  - increment, decrement
+  - functions (inbuilt, userdefined)
+* In-built functions:
+  - move(direction, n units) - moves that unit in the given direction(L, R, T, D) upto 'n' places
+  - carry() - carries the part in front of the unit
+  - rotate(L/R) - rotates the unit either left or right
+  - assemble() - assembles the parts which are directly in front of it
+* Compute sheet:
+  - Walking  (normal): 2
+  - Building (normal): 2
+  - Moving   (normal): 2
+* Units:
+  - Builder: 
+    - uses relatively less resources to assemble parts
+    - uses +1(walking), +2(moving), -1(building)
+  - Walker: 
+    - uses relatively less resources to move itself
+    - uses -1(walking), +2(building), +1(moving)
+  - Mover: 
+    - uses relatively less resources to move parts
+    - uses -1(moving), +2(walking), +1(building)
