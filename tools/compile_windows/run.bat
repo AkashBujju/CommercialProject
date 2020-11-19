@@ -1,5 +1,5 @@
 @echo off
 cls
-pushd bin
+pushd ../bin
 %1.exe %2
 popd
