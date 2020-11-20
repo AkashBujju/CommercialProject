@@ -72,14 +72,11 @@ int main(int argc, char** argv) {
 					buffer[len - 1] = '\0';
 				/* Deleting the newline character */
 
-				printf("buffer: %s\n", buffer);
-
 				/* Split string and Copy*/
 				uint16_t str_index = 0;
 				char* pch = strtok(buffer, " ");
 				while(pch != NULL) {
 					strcpy(split_strs.strings[split_strs.len].strings[str_index++], pch);
-					printf("str_index: %d\n", str_index);
 					/* @Note: How is this not crashing for cone.obj, for array size > 10 */
 					pch = strtok(NULL, " ");
 				}
@@ -89,20 +86,21 @@ int main(int argc, char** argv) {
 				split_strs.len += 1;
 			}
 
-			printf("_1\n");
-
 			Data data;
 			pack_into_structs(&data, &split_strs);
 			free(split_strs.strings);
 
-			printf("_2\n");
-
 			/* Saving */
 			char* pch = strtok(argv[1], ".");
+#ifdef __APPLE__
+			pch = strtok(pch, "/");
+			pch = strtok(NULL, "/");
+			char filename[25] = "../data_out/";
+#else
 			pch = strtok(pch, "\\");
 			pch = strtok(NULL, "\\");
-			printf("pch: %s\n", pch);
 			char filename[25] = "..\\data_out\\";
+#endif
 			strcat(filename, pch);
 			strcat(filename, ".model");
 			save_model(&data, filename);
@@ -112,7 +110,7 @@ int main(int argc, char** argv) {
 		fclose(file);
 	}
 
-	printf("-- ENDED\n");
+	printf("-- ENDED\n\n");
 	return 0;
 }
 

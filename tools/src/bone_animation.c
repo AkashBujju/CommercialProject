@@ -6,7 +6,7 @@
 #include "../../src/shader.h"
 #include "../../src/utils.h"
 #include "../../src/math.h" /* For testing the model */
-#include "../../src/model.h"
+#include "../../src/instanced_model.h"
 #include "../../src/light.h"
 
 void framebuffer_size_callback(GLFWwindow*, int, int);
@@ -30,8 +30,13 @@ int main() {
 	uint16_t window_width = 1024;
 	uint16_t window_height = 768;
 	GLFWwindow *window = init_gl_and_window("CommercialProject", window_width, window_height, 0);
-	GLuint program = compile_shader(combine_string(shaders_path, "v_shader.shader"), combine_string(shaders_path, "f_shader.shader"));
-	GLuint light_program = compile_shader(combine_string(shaders_path, "v_light.shader"), combine_string(shaders_path, "f_light.shader"));
+
+	GLuint program = compile_shader(combine_string(shaders_path, "v_shader.shader"),
+			                          combine_string(shaders_path, "f_shader.shader"));
+	GLuint instanced_program = compile_shader(combine_string(shaders_path, "instanced_v_shader.shader"),
+			                                   combine_string(shaders_path, "instanced_f_shader.shader"));
+	GLuint light_program = compile_shader(combine_string(shaders_path, "v_light.shader"),
+			                                combine_string(shaders_path, "f_light.shader"));
 
 	/* Init view and projection */
 	Matrix4 view, projection;
@@ -42,17 +47,23 @@ int main() {
 	projection = perspective(45.0f, (float)window_width / window_height, 0.1f, 500.0f);
 	/* Init view and projection */
 
-	Model m1;
-	load_model(&m1, program, combine_string(tmp_models_path, "sphere.model"));
-	translate_model(&m1, 0, -2, 0);
+	/* Instanced Model */
+	InstancedModel im;
+	load_instanced_model(&im, instanced_program, combine_string(tmp_models_path, "sphere.model"), 2);
+
+	translate_instanced_model(&im, 0, 3, 0, 0);
+	translate_instanced_model(&im, 1, -3, 0, 0);
+	set_color_instanced_model(&im, 0, 1, 0, 0);
+	set_color_instanced_model(&im, 1, 0, 1, 0);
 
 	Light l1;
 	load_light(&l1, light_program, combine_string(tmp_models_path, "light_cube.model"));
-	translate_light(&l1, +3, +5, -5);
+	translate_light(&l1, 0, 2, 5);
+	scale_light(&l1, 0.1f, 0.1f, 0.1f);
 
-	Vector3 objectColor, lightColor;
-	init_vector(&objectColor, 0.1f, 0.8f, 0.1f);
-	init_vector(&lightColor, 1.0f, 1.0f, 1.0f);
+	Vector3 light_color;
+	init_vector(&light_color, 1.0f, 1.0f, 1.0f);
+	/* Instanced Model */
 
 	while (!glfwWindowShouldClose(window)) {
 		process_input(window);
@@ -60,12 +71,16 @@ int main() {
 		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+		/* Set the view and projection */
 		Vector3 pos_plus_front = add(&position, &front);
 		view = look_at(&position, &pos_plus_front, &up);
 		set_matrix4(program, "view", &view);
 		set_matrix4(program, "projection", &projection);
+		set_matrix4(instanced_program, "view", &view);
+		set_matrix4(instanced_program, "projection", &projection);
 		set_matrix4(light_program, "view", &view);
 		set_matrix4(light_program, "projection", &projection);
+		/* Set the view and projection */
 
 		/* Moving the light */
 		const float radius = 5.0f;
@@ -74,14 +89,17 @@ int main() {
 		translate_light(&l1, light_x, +5, light_z);
 		/* Moving the light */
 
-		glUseProgram(m1.program);
-		set_vector3(m1.program, "objectColor", &objectColor);
-		set_vector3(m1.program, "lightColor", &lightColor);
-		set_vector3(m1.program, "lightPos", &l1.position);
-		set_vector3(m1.program, "viewPos", &position);
+		/* Instanced Model */
+		glUseProgram(instanced_program);
+		set_vector3(instanced_program, "lightColor", &light_color);
+		set_vector3(instanced_program, "lightPos", &l1.position);
+		set_vector3(instanced_program, "viewPos", &position);
+		draw_instanced_model(&im);
+		/* Instanced Model */
 
-		draw_model(&m1);
+		/* Light */
 		draw_light(&l1);
+		/* Light */
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();

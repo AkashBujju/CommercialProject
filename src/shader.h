@@ -9,5 +9,6 @@ unsigned int make_texture(const char* filename);
 void set_matrix4(unsigned int program, const char* name, struct Matrix4 *mat);
 void set_vector3(unsigned int program, const char* name, struct Vector3 *vec);
 void set_float(unsigned int program, const char* name, float f);
+void set_integer(unsigned int program, const char* name, GLint integer);
 
 #endif

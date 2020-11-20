@@ -37,12 +37,16 @@ void load_model(Model *model, GLuint program, const char* model_filename) {
 
 		free(vertices); /* @Note: Is this okay at this point? */
 
+		/* @Note: Change the below to custom values later */
 		init_vector(&model->scale, 1, 1, 1);
 		init_vector(&model->position, 0, 0, 0);
-		/* @Note: Change the below to custom values later */
 		model->width = 1;
 		model->height = 1;
 		model->depth = 1;
+		model->angle_in_degree = 0;
+		model->rotation_axes.x = 0;
+		model->rotation_axes.y = 0;
+		model->rotation_axes.z = 0;
 	}
 }
 
@@ -62,6 +66,13 @@ void scale_model(Model *model, float x, float y, float z) {
 	model->depth *= z;
 }
 
+void rotate_model(Model *model, float x, float y, float z, float degree) {
+	model->angle_in_degree = degree;
+	model->rotation_axes.x = x;
+	model->rotation_axes.y = y;
+	model->rotation_axes.z = z;
+}
+
 void draw_model(Model *model) {
 	glUseProgram(model->program);
 	make_identity(&model->model);
@@ -70,6 +81,15 @@ void draw_model(Model *model) {
 	translate_matrix(&model->model, model->position.x, model->position.y, model->position.z);
 	scale(&model->model, model->scale.x, model->scale.y, model->scale.z);
 	/* Translation & Scaling */
+
+	/* Rotation */
+	Vector3 tmp;
+	init_vector(&tmp, model->position.x, model->position.y, model->position.z);
+	translate_matrix(&model->model, 0, 0, 0);
+	rotate(&model->model, &model->rotation_axes, model->angle_in_degree);
+	translate_matrix(&model->model, tmp.x, tmp.y, tmp.z);
+	set_matrix4(model->program, "model", &model->model);
+	/* Rotation */
 
 	set_matrix4(model->program, "model", &model->model);
 	glBindVertexArray(model->vao);

@@ -43,12 +43,13 @@ int main() {
 	/* Init view and projection */
 
 	Model m1;
-	load_model(&m1, program, combine_string(tmp_models_path, "sphere.model"));
-	translate_model(&m1, 0, -2, 0);
+	load_model(&m1, program, combine_string(tmp_models_path, "plane.model"));
+	translate_model(&m1, 0, 0, 0);
 
 	Light l1;
 	load_light(&l1, light_program, combine_string(tmp_models_path, "light_cube.model"));
-	translate_light(&l1, +3, +5, -5);
+	translate_light(&l1, 3, 5, -5);
+	scale_light(&l1, 0.2f, 0.2f, 0.2f);
 
 	Vector3 objectColor, lightColor;
 	init_vector(&objectColor, 0.1f, 0.8f, 0.1f);
