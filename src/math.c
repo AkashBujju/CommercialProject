@@ -632,5 +632,5 @@ void print_vector2(Vector2 *vec) {
 }
 
 void print_vector(Vector3 *vec) {
-	printf("%.2f %.2f %.2f\n", vec->x, vec->y, vec->z);
+	printf("%.5f %.5f %.5f\n", vec->x, vec->y, vec->z);
 }

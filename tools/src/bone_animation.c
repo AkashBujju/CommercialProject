@@ -49,20 +49,30 @@ int main() {
 
 	/* Instanced Model */
 	InstancedModel im;
-	load_instanced_model(&im, instanced_program, combine_string(tmp_models_path, "sphere.model"), 2);
+	load_instanced_model(&im, instanced_program, combine_string(tmp_models_path, "capsule.model"), 9);
 
-	translate_instanced_model(&im, 0, 3, 0, 0);
-	translate_instanced_model(&im, 1, -3, 0, 0);
-	set_color_instanced_model(&im, 0, 1, 0, 0);
-	set_color_instanced_model(&im, 1, 0, 1, 0);
+	Vector3 current_pos;
+	Vector3 current_color;
+	init_vector(&current_pos, -5, +5, 0);
+	init_vector(&current_color, 0.1f, 0.1f, 0.1f);
+	for(uint16_t i = 1; i <= 9; ++i) {
+		if((i - 1) != 0 && (i - 1) % 3 == 0) {
+			current_pos.y -= 5;
+			current_pos.x = -5;
+		}
+
+		translate_instanced_model(&im, i - 1, current_pos.x, current_pos.y, current_pos.z);
+		set_material_instanced_model(&im, i - 1, "pearl");
+		current_pos.x += 5;
+		current_color.x += 0.01f;
+		current_color.y += 0.04f;
+		current_color.z += 0.03f;
+	}
 
 	Light l1;
 	load_light(&l1, light_program, combine_string(tmp_models_path, "light_cube.model"));
 	translate_light(&l1, 0, 2, 5);
 	scale_light(&l1, 0.1f, 0.1f, 0.1f);
-
-	Vector3 light_color;
-	init_vector(&light_color, 1.0f, 1.0f, 1.0f);
 	/* Instanced Model */
 
 	while (!glfwWindowShouldClose(window)) {
@@ -91,8 +101,15 @@ int main() {
 
 		/* Instanced Model */
 		glUseProgram(instanced_program);
-		set_vector3(instanced_program, "lightColor", &light_color);
-		set_vector3(instanced_program, "lightPos", &l1.position);
+		Vector3 light_color, diffuse_color, specular_color, ambient_color;
+		init_vector(&light_color, 1, 1, 1);
+		init_vector(&specular_color, 1, 1, 1);
+		diffuse_color = scalar_mul(&light_color, 0.5f);
+		ambient_color = scalar_mul(&diffuse_color, 0.2f);
+		set_vector3(instanced_program, "light.ambient", &ambient_color);
+		set_vector3(instanced_program, "light.diffuse", &diffuse_color);
+		set_vector3(instanced_program, "light.specular", &specular_color);
+		set_vector3(instanced_program, "light.position", &l1.position);
 		set_vector3(instanced_program, "viewPos", &position);
 		draw_instanced_model(&im);
 		/* Instanced Model */

@@ -95,11 +95,11 @@ int main(int argc, char** argv) {
 #ifdef __APPLE__
 			pch = strtok(pch, "/");
 			pch = strtok(NULL, "/");
-			char filename[25] = "../data_out/";
+			char filename[50] = "../data_out/";
 #else
 			pch = strtok(pch, "\\");
 			pch = strtok(NULL, "\\");
-			char filename[25] = "..\\data_out\\";
+			char filename[50] = "..\\data_out\\";
 #endif
 			strcat(filename, pch);
 			strcat(filename, ".model");
