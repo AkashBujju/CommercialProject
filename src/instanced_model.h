@@ -27,6 +27,7 @@ typedef struct InstancedModel {
 void load_instanced_model(InstancedModel *instanced_model, GLuint program, const char* model_filename, uint32_t num_models);
 void translate_instanced_model(InstancedModel *instanced_model, uint32_t model_index, float x, float y, float z);
 void scale_instanced_model(InstancedModel *instanced_model, uint32_t model_index, float x, float y, float z);
+void rotate_instanced_model(InstancedModel *instanced_model, uint32_t model_index, float x, float y, float z, float degree);
 void set_material_instanced_model(InstancedModel *instanced_model, uint32_t model_index, char* material_name);
 void draw_instanced_model(InstancedModel *instanced_model);
 

@@ -49,7 +49,7 @@ int main() {
 
 	/* Instanced Model */
 	InstancedModel im;
-	load_instanced_model(&im, instanced_program, combine_string(tmp_models_path, "capsule.model"), 9);
+	load_instanced_model(&im, instanced_program, combine_string(tmp_models_path, "torus.model"), 9);
 
 	Vector3 current_pos;
 	Vector3 current_color;
@@ -62,16 +62,26 @@ int main() {
 		}
 
 		translate_instanced_model(&im, i - 1, current_pos.x, current_pos.y, current_pos.z);
-		set_material_instanced_model(&im, i - 1, "pearl");
+		rotate_instanced_model(&im, i - 1, 1, 0, 0, 90);
 		current_pos.x += 5;
 		current_color.x += 0.01f;
 		current_color.y += 0.04f;
 		current_color.z += 0.03f;
 	}
 
+	set_material_instanced_model(&im, 0, "ruby");
+	set_material_instanced_model(&im, 1, "gold");
+	set_material_instanced_model(&im, 2, "silver");
+	set_material_instanced_model(&im, 3, "jade");
+	set_material_instanced_model(&im, 4, "black_rubber");
+	set_material_instanced_model(&im, 5, "red_rubber");
+	set_material_instanced_model(&im, 6, "yellow_rubber");
+	set_material_instanced_model(&im, 7, "copper");
+	set_material_instanced_model(&im, 8, "bronze");
+
 	Light l1;
 	load_light(&l1, light_program, combine_string(tmp_models_path, "light_cube.model"));
-	translate_light(&l1, 0, 2, 5);
+	translate_light(&l1, 0, 0, 5);
 	scale_light(&l1, 0.1f, 0.1f, 0.1f);
 	/* Instanced Model */
 
@@ -96,7 +106,7 @@ int main() {
 		const float radius = 5.0f;
 		float light_x = sin(glfwGetTime()) * radius;
 		float light_z = cos(glfwGetTime()) * radius;
-		translate_light(&l1, light_x, +5, light_z);
+		translate_light(&l1, light_x, 0, light_z);
 		/* Moving the light */
 
 		/* Instanced Model */

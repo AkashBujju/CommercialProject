@@ -107,6 +107,18 @@ void set_material_instanced_model(InstancedModel *instanced_model, uint32_t mode
 	}
 }
 
+void rotate_instanced_model(InstancedModel *instanced_model, uint32_t model_index, float x, float y, float z, float degree) {
+	if(model_index >= instanced_model->num_models) {
+		printf("WARNING: In rotate_instanced_model(): model_index(%d) >= num_models(%d)\n", model_index, instanced_model->num_models);
+	}
+	else {
+		instanced_model->angle_in_degree[model_index] = degree;
+		instanced_model->rotation_axes[model_index].x = x;
+		instanced_model->rotation_axes[model_index].y = y;
+		instanced_model->rotation_axes[model_index].z = z;
+	}
+}
+
 static void make_glsl_string(char* var_name, uint32_t index, char* destination) {
 	char index_str[5];
 	strcpy(destination, var_name);
