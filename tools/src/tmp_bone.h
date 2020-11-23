@@ -1,6 +1,8 @@
 #ifndef TMP_BONE_H
 #define TMP_BONE_H
 
+#define MAX_LINES 10
+
 #include <glad/glad.h>
 #include <stdint.h>
 #include "../../src/math.h"
@@ -11,12 +13,21 @@ typedef struct Line {
 	Vector2 weights[2];
 } Line;
 
-typedef struct Mesh {
+typedef struct Bone {
 	Matrix4 model;
+	Vector3 orientation;
+	float angle;
+} Bone;
+
+typedef struct Mesh {
 	GLuint vao, vbo, program;
-	Matrix4 bones[3];
-	Line lines[3];
 	uint32_t num_lines;
+	Bone bones[MAX_LINES];
+	Line lines[MAX_LINES];
+	Matrix4 mesh_model;
+	Vector3 mesh_position;
+	Vector3 mesh_orientation;
+	float mesh_angle;
 } Mesh;
 
 void add_vertex_to_mesh(Mesh *mesh, uint32_t line_index, uint32_t vertex_index, float x1, float y1, float z1, float b0, float b1, float w0, float w1);

@@ -2,9 +2,10 @@
 #include "../../src/shader.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 void add_vertex_to_mesh(Mesh *mesh, uint32_t line_index, uint32_t vertex_index, float x1, float y1, float z1, float b0, float b1, float w0, float w1) {
-	if(line_index > 2 || vertex_index > 1) {
+	if(line_index > MAX_LINES - 1 || vertex_index > 1) {
 		printf("WARNING add_vertex_to_mesh()\n");
 	}
 	else {
@@ -41,10 +42,12 @@ void compile_mesh(Mesh *mesh, GLuint program, uint32_t num_vertices) {
 		verts[index++] = mesh->lines[i].weights[1].y;
 	}
 
+	/*
 	for(uint32_t i = 0; i < mesh->num_lines; ++i) {
 		printf("%.3f %.3f %.3f %.2f %.2f %.2f %.2f\n", mesh->lines[i].positions[0].x, mesh->lines[i].positions[0].y, mesh->lines[i].positions[0].z, mesh->lines[i].bone_indices[0].x, mesh->lines[i].bone_indices[0].y, mesh->lines[i].weights[0].x, mesh->lines[i].weights[0].y);
 		printf("%.3f %.3f %.3f %.2f %.2f %.2f %.2f\n", mesh->lines[i].positions[1].x, mesh->lines[i].positions[1].y, mesh->lines[i].positions[1].z, mesh->lines[i].bone_indices[1].x, mesh->lines[i].bone_indices[1].y, mesh->lines[i].weights[1].x, mesh->lines[i].weights[1].y);
 	}
+	*/
 
 	glGenVertexArrays(1, &mesh->vao);
 	glGenBuffers(1, &mesh->vbo);
@@ -58,23 +61,21 @@ void compile_mesh(Mesh *mesh, GLuint program, uint32_t num_vertices) {
 	glVertexAttribPointer(2, 2, GL_FLOAT, GL_TRUE, 7 * sizeof(float), (void*)(5 * sizeof(float)));
 	glEnableVertexAttribArray(2);
 
-	make_identity(&mesh->model);
+	/* Init */
+	init_vector(&mesh->mesh_position, 0, 0, 0);
+	init_vector(&mesh->mesh_orientation, 0, 0, 0);
+	mesh->mesh_angle = 0;
 	for(uint32_t i = 0; i < mesh->num_lines; ++i) {
-		make_identity(&mesh->bones[i]);
+		init_vector(&mesh->bones[i].orientation, 0, 0, 0);
+		mesh->bones[i].angle = 0;
 	}
-}
-
-void translate_bone_in_mesh(Mesh *mesh, uint32_t bone_index, float x, float y, float z) {
-	if(bone_index >= mesh->num_lines) {
-		printf("WARNING: translate_bone_in_mesh()\n");
-	}
-	else {
-		translate_matrix(&mesh->bones[bone_index], x, y, z);
-	}
+	/* Init */
 }
 
 void translate_mesh(Mesh *mesh, float x, float y, float z) {
-	translate_matrix(&mesh->model, x, y, z);
+	mesh->mesh_position.x = x;
+	mesh->mesh_position.y = y;
+	mesh->mesh_position.z = z;
 }
 
 void rotate_bone_in_mesh(Mesh *mesh, uint32_t bone_index, float x, float y, float z, float degree) {
@@ -82,27 +83,61 @@ void rotate_bone_in_mesh(Mesh *mesh, uint32_t bone_index, float x, float y, floa
 		printf("WARNING: translate_bone_in_mesh()\n");
 	}
 	else {
-		Vector3 axes = { x, y, z };
-		rotate(&mesh->bones[bone_index], &axes, degree);
+		mesh->bones[bone_index].orientation.x = x;
+		mesh->bones[bone_index].orientation.y = y;
+		mesh->bones[bone_index].orientation.z = z;
+		mesh->bones[bone_index].angle = degree;
 	}
 }
 
 void rotate_mesh(Mesh *mesh, float x, float y, float z, float degree) {
-	Vector3 axes = { x, y, z };
-	rotate(&mesh->model, &axes, degree);
+	mesh->mesh_orientation.x = x;
+	mesh->mesh_orientation.y = y;
+	mesh->mesh_orientation.z = z;
+	mesh->mesh_angle = degree;
+}
+
+static void make_glsl_string(char* var_name, uint32_t index, char* destination) {
+	char index_str[5];
+	strcpy(destination, var_name);
+	strcat(destination, "[");
+	sprintf(index_str, "%i", index);
+	strcat(destination, index_str);
+	strcat(destination, "]");
 }
 
 void draw_mesh(Mesh *mesh) {
 	glUseProgram(mesh->program);
 
-	Matrix4 ib_1 = matrix_inverse(&mesh->bones[0]);
-	Matrix4 ib_2 = matrix_inverse(&mesh->bones[1]);
-	Matrix4 ib_3 = matrix_inverse(&mesh->bones[2]);
+	/* Make Identity */
+	make_identity(&mesh->mesh_model);
+	for(uint32_t i = 0; i < mesh->num_lines; ++i)
+		make_identity(&mesh->bones[i].model);
+	/* Make Identity */
 
-	set_matrix4(mesh->program, "model", &mesh->model);
-	set_matrix4(mesh->program, "bones[0]", &ib_1);
-	set_matrix4(mesh->program, "bones[1]", &ib_2);
-	set_matrix4(mesh->program, "bones[2]", &ib_3);
+	/* Translation */
+	translate_matrix(&mesh->mesh_model, mesh->mesh_position.x, mesh->mesh_position.y, mesh->mesh_position.z);
+	/* Translation */
+
+	/* Rotation */
+	Vector3 tmp;
+	init_vector(&tmp, mesh->mesh_position.x, mesh->mesh_position.y, mesh->mesh_position.z);
+	translate_matrix(&mesh->mesh_model, 0, 0, 0);
+	rotate(&mesh->mesh_model, &mesh->mesh_orientation, mesh->mesh_angle);
+	translate_matrix(&mesh->mesh_model, tmp.x, tmp.y, tmp.z);
+	for(uint32_t i = 0; i < mesh->num_lines; ++i) {
+		rotate(&mesh->bones[i].model, &mesh->bones[i].orientation, mesh->bones[i].angle);
+	}
+	/* Rotation */
+
+	/* Setting the model matrices */
+	set_matrix4(mesh->program, "model", &mesh->mesh_model);
+	for(uint32_t i = 0; i < mesh->num_lines; ++i) {
+		char destination[50];
+		make_glsl_string("bones", i, destination);
+		set_matrix4(mesh->program, destination, &mesh->bones[i].model);
+	}
+	/* Setting the model matrices */
 
 	glBindVertexArray(mesh->vao);
 	glDrawArrays(GL_LINES, 0, mesh->num_lines * 2);

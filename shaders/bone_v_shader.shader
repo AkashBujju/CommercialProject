@@ -6,7 +6,7 @@ layout (location = 2) in vec2 aWeights;
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
-uniform mat4 bones[3];
+uniform mat4 bones[10];
 
 void main() {
 	int index_1 = int(aBoneIndices.x);
@@ -15,5 +15,4 @@ void main() {
 	bone_transform += bones[index_2] * aWeights.y;
 
 	gl_Position = projection * view * model * bone_transform * vec4(aPos, 1.0f);
-	// gl_Position = projection * view * model * vec4(aPos, 1.0f);
 }

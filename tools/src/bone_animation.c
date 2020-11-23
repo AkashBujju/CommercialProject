@@ -79,20 +79,17 @@ int main() {
 
 	/* Bones */
 	Mesh mesh;
-	add_vertex_to_mesh(&mesh, 0, 0, -3.1f, 0, 0, 0, 0, 1, 0);
-	add_vertex_to_mesh(&mesh, 0, 1, -1.1f, 0, 0, 0, 1, 0.5f, 0.5f);
-	add_vertex_to_mesh(&mesh, 1, 0, -1, 0, 0, 0, 1, 0.5f, 0.5f);
-	add_vertex_to_mesh(&mesh, 1, 1, +1, 0, 0, 1, 2, 0.5f, 0.5f);
-	add_vertex_to_mesh(&mesh, 2, 0, +1.1f, 0, 0, 1, 2, 0.5f, 0.5f);
-	add_vertex_to_mesh(&mesh, 2, 1, +3.1f, 0, 0, 2, 0, 1, 0);
-	compile_mesh(&mesh, bone_program, 6);
-
-	// rotate_mesh(&mesh, 0, 0, 1, 45);
-	// translate_mesh(&mesh, 0, -3, 0);
-
-	// translate_bone_in_mesh(&mesh, 0, -2.1f, 0, 0);
-	// translate_bone_in_mesh(&mesh, 1, 0, 0, 0);
-	// translate_bone_in_mesh(&mesh, 2, +2.1f, 0, 0);
+	add_vertex_to_mesh(&mesh, 0, 0, -5.2f, 0, 0, 0, 0, 1, 0);
+	add_vertex_to_mesh(&mesh, 0, 1, -3.2f, 0, 0, 0, 1, 0.5f, 0.5f);
+	add_vertex_to_mesh(&mesh, 1, 0, -3.1f, 0, 0, 0, 1, 0.5f, 0.5f);
+	add_vertex_to_mesh(&mesh, 1, 1, -1.1f, 0, 0, 1, 2, 0.5f, 0.5f);
+	add_vertex_to_mesh(&mesh, 2, 0, -1.0f, 0, 0, 1, 2, 0.5f, 0.5f);
+	add_vertex_to_mesh(&mesh, 2, 1, +1.0f, 0, 0, 2, 3, 0.5f, 0.5f);
+	add_vertex_to_mesh(&mesh, 3, 0, +1.1f, 0, 0, 2, 3, 0.5f, 0.5f);
+	add_vertex_to_mesh(&mesh, 3, 1, +3.1f, 0, 0, 3, 4, 0.5f, 0.5f);
+	add_vertex_to_mesh(&mesh, 4, 0, +3.2f, 0, 0, 3, 4, 0.5f, 0.5f);
+	add_vertex_to_mesh(&mesh, 4, 1, +5.2f, 0, 0, 4, 0, 1, 0);
+	compile_mesh(&mesh, bone_program, 10);
 	/* Bones */
 
 
@@ -140,10 +137,12 @@ int main() {
 		/* Light */
 
 		/* Bones */
-		const float degree = 45;
-		float d = sin(glfwGetTime() * 0.001f) * degree;
-		rotate_bone_in_mesh(&mesh, 1, 0, 0, 1, d);
-		rotate_bone_in_mesh(&mesh, 2, 0, 0, 1, d);
+		const float degree = 40;
+		float d = sin(glfwGetTime()) * degree;
+		rotate_bone_in_mesh(&mesh, 0, 0, 0, 1, d);
+		rotate_bone_in_mesh(&mesh, 1, 0, 0, 1, d * 0.5f);
+		rotate_bone_in_mesh(&mesh, 2, 0, 0, 1, d * 0.25f);
+		rotate_bone_in_mesh(&mesh, 3, 0, 0, 1, d * 0.125f);
 		set_matrix4(bone_program, "view", &view);
 		set_matrix4(bone_program, "projection", &projection);
 		draw_mesh(&mesh);
