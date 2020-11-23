@@ -8,6 +8,7 @@
 #include "../../src/math.h" /* For testing the model */
 #include "../../src/instanced_model.h"
 #include "../../src/light.h"
+#include "tmp_bone.h"
 
 void framebuffer_size_callback(GLFWwindow*, int, int);
 void process_input(GLFWwindow*);
@@ -35,6 +36,8 @@ int main() {
 			                          combine_string(shaders_path, "f_shader.shader"));
 	GLuint instanced_program = compile_shader(combine_string(shaders_path, "instanced_v_shader.shader"),
 			                                   combine_string(shaders_path, "instanced_f_shader.shader"));
+	GLuint bone_program = compile_shader(combine_string(shaders_path, "bone_v_shader.shader"),
+			                                   combine_string(shaders_path, "bone_f_shader.shader"));
 	GLuint light_program = compile_shader(combine_string(shaders_path, "v_light.shader"),
 			                                combine_string(shaders_path, "f_light.shader"));
 
@@ -48,85 +51,103 @@ int main() {
 	/* Init view and projection */
 
 	/* Instanced Model */
-	InstancedModel im;
-	load_instanced_model(&im, instanced_program, combine_string(tmp_models_path, "torus.model"), 9);
+	// InstancedModel im;
+	// load_instanced_model(&im, instanced_program, combine_string(tmp_models_path, "plane.model"), 3);
 
-	Vector3 current_pos;
-	Vector3 current_color;
-	init_vector(&current_pos, -5, +5, 0);
-	init_vector(&current_color, 0.1f, 0.1f, 0.1f);
-	for(uint16_t i = 1; i <= 9; ++i) {
-		if((i - 1) != 0 && (i - 1) % 3 == 0) {
-			current_pos.y -= 5;
-			current_pos.x = -5;
-		}
+	// Vector3 current_pos;
+	// Vector3 current_color;
+	// init_vector(&current_pos, -4, 0, 0);
+	// init_vector(&current_color, 0.1f, 0.1f, 0.1f);
+	// for(uint16_t i = 1; i <= 3; ++i) {
+	// 	translate_instanced_model(&im, i - 1, current_pos.x, current_pos.y, current_pos.z);
+	// 	scale_instanced_model(&im, i - 1, 2.0f, 0.5f, 1.0f);
+	// 	current_pos.x += 4;
+	// 	current_color.x += 0.01f;
+	// 	current_color.y += 0.04f;
+	// 	current_color.z += 0.03f;
+	// }
 
-		translate_instanced_model(&im, i - 1, current_pos.x, current_pos.y, current_pos.z);
-		rotate_instanced_model(&im, i - 1, 1, 0, 0, 90);
-		current_pos.x += 5;
-		current_color.x += 0.01f;
-		current_color.y += 0.04f;
-		current_color.z += 0.03f;
-	}
+	// set_material_instanced_model(&im, 0, "bronze");
+	// set_material_instanced_model(&im, 1, "gold");
+	// set_material_instanced_model(&im, 2, "silver");
 
-	set_material_instanced_model(&im, 0, "ruby");
-	set_material_instanced_model(&im, 1, "gold");
-	set_material_instanced_model(&im, 2, "silver");
-	set_material_instanced_model(&im, 3, "jade");
-	set_material_instanced_model(&im, 4, "black_rubber");
-	set_material_instanced_model(&im, 5, "red_rubber");
-	set_material_instanced_model(&im, 6, "yellow_rubber");
-	set_material_instanced_model(&im, 7, "copper");
-	set_material_instanced_model(&im, 8, "bronze");
-
-	Light l1;
-	load_light(&l1, light_program, combine_string(tmp_models_path, "light_cube.model"));
-	translate_light(&l1, 0, 0, 5);
-	scale_light(&l1, 0.1f, 0.1f, 0.1f);
+	// Light l1;
+	// load_light(&l1, light_program, combine_string(tmp_models_path, "light_cube.model"));
+	// translate_light(&l1, 0, 0, 5);
+	// scale_light(&l1, 0.1f, 0.1f, 0.1f);
 	/* Instanced Model */
+
+	/* Bones */
+	Mesh mesh;
+	add_vertex_to_mesh(&mesh, 0, 0, -3.1f, 0, 0, 0, 0, 1, 0);
+	add_vertex_to_mesh(&mesh, 0, 1, -1.1f, 0, 0, 0, 1, 0.5f, 0.5f);
+	add_vertex_to_mesh(&mesh, 1, 0, -1, 0, 0, 0, 1, 0.5f, 0.5f);
+	add_vertex_to_mesh(&mesh, 1, 1, +1, 0, 0, 1, 2, 0.5f, 0.5f);
+	add_vertex_to_mesh(&mesh, 2, 0, +1.1f, 0, 0, 1, 2, 0.5f, 0.5f);
+	add_vertex_to_mesh(&mesh, 2, 1, +3.1f, 0, 0, 2, 0, 1, 0);
+	compile_mesh(&mesh, bone_program, 6);
+
+	// rotate_mesh(&mesh, 0, 0, 1, 45);
+	// translate_mesh(&mesh, 0, -3, 0);
+
+	// translate_bone_in_mesh(&mesh, 0, -2.1f, 0, 0);
+	// translate_bone_in_mesh(&mesh, 1, 0, 0, 0);
+	// translate_bone_in_mesh(&mesh, 2, +2.1f, 0, 0);
+	/* Bones */
+
 
 	while (!glfwWindowShouldClose(window)) {
 		process_input(window);
 
-		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+		glClearColor(0.05f, 0.05f, 0.05f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		/* Set the view and projection */
 		Vector3 pos_plus_front = add(&position, &front);
 		view = look_at(&position, &pos_plus_front, &up);
-		set_matrix4(program, "view", &view);
-		set_matrix4(program, "projection", &projection);
-		set_matrix4(instanced_program, "view", &view);
-		set_matrix4(instanced_program, "projection", &projection);
-		set_matrix4(light_program, "view", &view);
-		set_matrix4(light_program, "projection", &projection);
+		// set_matrix4(program, "view", &view);
+		// set_matrix4(program, "projection", &projection);
+		// set_matrix4(instanced_program, "view", &view);
+		// set_matrix4(instanced_program, "projection", &projection);
+		// set_matrix4(light_program, "view", &view);
+		// set_matrix4(light_program, "projection", &projection);
 		/* Set the view and projection */
 
 		/* Moving the light */
-		const float radius = 5.0f;
-		float light_x = sin(glfwGetTime()) * radius;
-		float light_z = cos(glfwGetTime()) * radius;
-		translate_light(&l1, light_x, 0, light_z);
+		// const float radius = 5.0f;
+		// float light_x = sin(glfwGetTime()) * radius;
+		// float light_z = cos(glfwGetTime()) * radius;
+		// translate_light(&l1, light_x, 0, light_z);
 		/* Moving the light */
 
 		/* Instanced Model */
-		glUseProgram(instanced_program);
-		Vector3 light_color, diffuse_color, specular_color, ambient_color;
-		init_vector(&light_color, 1, 1, 1);
-		init_vector(&specular_color, 1, 1, 1);
-		diffuse_color = scalar_mul(&light_color, 0.5f);
-		ambient_color = scalar_mul(&diffuse_color, 0.2f);
-		set_vector3(instanced_program, "light.ambient", &ambient_color);
-		set_vector3(instanced_program, "light.diffuse", &diffuse_color);
-		set_vector3(instanced_program, "light.specular", &specular_color);
-		set_vector3(instanced_program, "light.position", &l1.position);
-		set_vector3(instanced_program, "viewPos", &position);
-		draw_instanced_model(&im);
+		// glUseProgram(instanced_program);
+		// Vector3 light_color, diffuse_color, specular_color, ambient_color;
+		// init_vector(&light_color, 1, 1, 1);
+		// init_vector(&specular_color, 1, 1, 1);
+		// diffuse_color = scalar_mul(&light_color, 0.5f);
+		// ambient_color = scalar_mul(&diffuse_color, 0.2f);
+		// set_vector3(instanced_program, "light.ambient", &ambient_color);
+		// set_vector3(instanced_program, "light.diffuse", &diffuse_color);
+		// set_vector3(instanced_program, "light.specular", &specular_color);
+		// set_vector3(instanced_program, "light.position", &l1.position);
+		// set_vector3(instanced_program, "viewPos", &position);
+		// draw_instanced_model(&im);
 		/* Instanced Model */
 
 		/* Light */
-		draw_light(&l1);
+		// draw_light(&l1);
 		/* Light */
+
+		/* Bones */
+		const float degree = 45;
+		float d = sin(glfwGetTime() * 0.001f) * degree;
+		rotate_bone_in_mesh(&mesh, 1, 0, 0, 1, d);
+		rotate_bone_in_mesh(&mesh, 2, 0, 0, 1, d);
+		set_matrix4(bone_program, "view", &view);
+		set_matrix4(bone_program, "projection", &projection);
+		draw_mesh(&mesh);
+		/* Bones */
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();

@@ -40,14 +40,14 @@ void load_instanced_model(InstancedModel *instanced_model, GLuint program, const
 		glGenBuffers(1, &instanced_model->vbo);
 		glBindVertexArray(instanced_model->vao);
 		glBindBuffer(GL_ARRAY_BUFFER, instanced_model->vbo);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(float) * num_floats, vertices, GL_STATIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(float) * num_floats, vertices, GL_STATIC_DRAW); /* @Note: Should we change this to dynamic draw later? */
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_TRUE, 6 * sizeof(float), (void*)0);
 		glEnableVertexAttribArray(0);
-		glVertexAttribPointer(1, 3, GL_FLOAT, GL_TRUE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+		glVertexAttribPointer(1, 2, GL_FLOAT, GL_TRUE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
 		glEnableVertexAttribArray(1);
 
-		/* @Note: Is this okay at this point? */
-		/* free(vertices); */
+		/* @Note: Is this okay at this point?
+		free(vertices); */
 
 		for(uint32_t i = 0; i < instanced_model->num_models; ++i) {
 			/* @Note: Change the below to custom values later */
