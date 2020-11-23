@@ -32,14 +32,10 @@ int main() {
 	uint16_t window_height = 768;
 	GLFWwindow *window = init_gl_and_window("CommercialProject", window_width, window_height, 0);
 
-	GLuint program = compile_shader(combine_string(shaders_path, "v_shader.shader"),
-			                          combine_string(shaders_path, "f_shader.shader"));
-	GLuint instanced_program = compile_shader(combine_string(shaders_path, "instanced_v_shader.shader"),
-			                                   combine_string(shaders_path, "instanced_f_shader.shader"));
-	GLuint bone_program = compile_shader(combine_string(shaders_path, "bone_v_shader.shader"),
-			                                   combine_string(shaders_path, "bone_f_shader.shader"));
-	GLuint light_program = compile_shader(combine_string(shaders_path, "v_light.shader"),
-			                                combine_string(shaders_path, "f_light.shader"));
+	GLuint program = compile_shader(combine_string(shaders_path, "v_shader.shader"), combine_string(shaders_path, "f_shader.shader"));
+	GLuint instanced_program = compile_shader(combine_string(shaders_path, "instanced_v_shader.shader"), combine_string(shaders_path, "instanced_f_shader.shader"));
+	GLuint bone_program = compile_shader(combine_string(shaders_path, "bone_v_shader.shader"), combine_string(shaders_path, "bone_f_shader.shader"));
+	GLuint light_program = compile_shader(combine_string(shaders_path, "v_light.shader"), combine_string(shaders_path, "f_light.shader"));
 
 	/* Init view and projection */
 	Matrix4 view, projection;
@@ -79,19 +75,18 @@ int main() {
 
 	/* Bones */
 	Mesh mesh;
-	add_vertex_to_mesh(&mesh, 0, 0, -5.2f, 0, 0, 0, 0, 1, 0);
-	add_vertex_to_mesh(&mesh, 0, 1, -3.2f, 0, 0, 0, 1, 0.5f, 0.5f);
-	add_vertex_to_mesh(&mesh, 1, 0, -3.1f, 0, 0, 0, 1, 0.5f, 0.5f);
-	add_vertex_to_mesh(&mesh, 1, 1, -1.1f, 0, 0, 1, 2, 0.5f, 0.5f);
-	add_vertex_to_mesh(&mesh, 2, 0, -1.0f, 0, 0, 1, 2, 0.5f, 0.5f);
-	add_vertex_to_mesh(&mesh, 2, 1, +1.0f, 0, 0, 2, 3, 0.5f, 0.5f);
-	add_vertex_to_mesh(&mesh, 3, 0, +1.1f, 0, 0, 2, 3, 0.5f, 0.5f);
-	add_vertex_to_mesh(&mesh, 3, 1, +3.1f, 0, 0, 3, 4, 0.5f, 0.5f);
-	add_vertex_to_mesh(&mesh, 4, 0, +3.2f, 0, 0, 3, 4, 0.5f, 0.5f);
-	add_vertex_to_mesh(&mesh, 4, 1, +5.2f, 0, 0, 4, 0, 1, 0);
-	compile_mesh(&mesh, bone_program, 10);
+	add_vertex_to_mesh(&mesh, 0, 0, 0, -5.2f, 0, 0, 0, 1, 0);
+	add_vertex_to_mesh(&mesh, 0, 1, 0, -3.2f, 0, 0, 1, 0.5f, 0.5f);
+	add_vertex_to_mesh(&mesh, 1, 0, 0, -3.1f, 0, 0, 1, 0.5f, 0.5f);
+	add_vertex_to_mesh(&mesh, 1, 1, 0, -1.1f, 0, 1, 2, 0.5f, 0.5f);
+	add_vertex_to_mesh(&mesh, 2, 0, 0, -1.0f, 0, 1, 2, 0.5f, 0.5f);
+	add_vertex_to_mesh(&mesh, 2, 1, 0, +1.0f, 0, 2, 3, 0.5f, 0.5f);
+	add_vertex_to_mesh(&mesh, 3, 0, 0, +1.1f, 0, 2, 3, 0.5f, 0.5f);
+	add_vertex_to_mesh(&mesh, 3, 1, 0, +3.1f, 0, 3, 4, 0.5f, 0.5f);
+	add_vertex_to_mesh(&mesh, 4, 0, 0, +3.2f, 0, 3, 4, 0.5f, 0.5f);
+	add_vertex_to_mesh(&mesh, 4, 1, 0, +5.2f, 0, 4, 0, 1, 0);
+	compile_mesh(&mesh, bone_program, 6);
 	/* Bones */
-
 
 	while (!glfwWindowShouldClose(window)) {
 		process_input(window);
@@ -137,12 +132,11 @@ int main() {
 		/* Light */
 
 		/* Bones */
-		const float degree = 40;
+		const float degree = 90;
 		float d = sin(glfwGetTime()) * degree;
-		rotate_bone_in_mesh(&mesh, 0, 0, 0, 1, d);
-		rotate_bone_in_mesh(&mesh, 1, 0, 0, 1, d * 0.5f);
-		rotate_bone_in_mesh(&mesh, 2, 0, 0, 1, d * 0.25f);
-		rotate_bone_in_mesh(&mesh, 3, 0, 0, 1, d * 0.125f);
+		rotate_bone_in_mesh(&mesh, 0, 1, 0, 0, d);
+		// rotate_bone_in_mesh(&mesh, 1, 0, 0, 1, d * 0.5f);
+		// rotate_bone_in_mesh(&mesh, 2, 0, 0, 1, d * 0.25f);
 		set_matrix4(bone_program, "view", &view);
 		set_matrix4(bone_program, "projection", &projection);
 		draw_mesh(&mesh);

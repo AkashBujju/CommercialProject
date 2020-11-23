@@ -9,7 +9,9 @@ ToDo:
 Not Done:
 - Mutiple light sources
 - Load the cone model
-- A simple hand movement bone animation
+- A simple hand movement bone animation (half done)
+- Model loader for bone animation
+- Fix the bone rotation bug
 
 Done:
 - Try instancing

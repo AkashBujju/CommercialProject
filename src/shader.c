@@ -94,6 +94,12 @@ void set_vector3(unsigned int program, const char* name, struct Vector3 *vec) {
 	glUniform3f(transform_loc, vec->x, vec->y, vec->z);
 }
 
+void set_vector2(unsigned int program, const char* name, struct Vector2 *vec) {
+	glUseProgram(program);
+	unsigned int transform_loc = glGetUniformLocation(program, name);
+	glUniform2f(transform_loc, vec->x, vec->y);
+}
+
 void set_integer(unsigned int program, const char* name, GLint integer) {
 	glUseProgram(program);
 	unsigned int transform_loc = glGetUniformLocation(program, name);
