@@ -6,6 +6,7 @@
 #include "../../src/shader.h"
 #include "../../src/utils.h"
 #include "../../src/math.h" /* For testing the model */
+#include "../../src/text.h"
 
 Vector3 front, position, up;
 static uint8_t first_mouse = 1;
@@ -23,8 +24,9 @@ void process_input(GLFWwindow*);
 GLFWwindow* init_gl_and_window(const char*, uint16_t*, uint16_t*, uint8_t);
 void mouse_callback(GLFWwindow*, double, double);
 void scroll_callback(GLFWwindow*, double, double);
+void mouse_button_callback(GLFWwindow*, int, int, int);
 
-/* Model Loading */
+/* Rectangle2D */
 typedef struct Rectangle2D {
 	GLuint vao, vbo, program;
 	GLuint texture_id;
@@ -35,42 +37,66 @@ typedef struct Rectangle2D {
 void load_rectangle_2d(Rectangle2D *rectangle_2d, GLuint program, GLuint texture_id, float w, float h);
 void translate_rectangle_2d(Rectangle2D *rct, float x, float y);
 void draw_rectangle_2d(Rectangle2D *rectangle_2d);
-/* Model Loading */
+/* Rectangle2D */
+
+uint16_t window_width, window_height;
+GLuint gui_tex_1, sample_tex;
+Rectangle2D rct;
+Font font;
 
 int main() {
-	uint16_t window_width, window_height;
 	GLFWwindow *window = init_gl_and_window("Model Editor", &window_width, &window_height, 1);
 
+	/* Shaders */
 	GLuint program_2d = compile_shader(combine_string(shaders_path, "rect_v_shader.shader"), combine_string(shaders_path, "texture_f_shader.shader"));
+	GLuint text_program = compile_shader(combine_string(shaders_path, "v_text.shader"), combine_string(shaders_path, "f_text.shader"));
+	/* Shaders */
 
-	GLuint sample_texture = make_texture(combine_string(assets_path, "png/test_1.png")); 
+	/* Textures */
+	gui_tex_1 = make_texture(combine_string(assets_path, "png/test_1.png")); 
+	sample_tex = make_texture(combine_string(assets_path, "png/safety_blue.png")); 
+	/* Textures */
 
 	/* Init view and projection */
-	Matrix4 view, projection;
+	Matrix4 view, projection, text_projection;
 	init_vector(&front, 0, 0, -1);
 	init_vector(&position, 0, 0, 10);
 	init_vector(&up, 0, 1, 0);
 	make_identity(&view);
 	projection = perspective(45.0f, (float)window_width / window_height, 0.1f, 500.0f);
+	text_projection = ortho(0, window_width, 0, window_height);
 	/* Init view and projection */
 
-	/* Ortho Rectangle */
-	Rectangle2D rct;
-	load_rectangle_2d(&rct, program_2d, sample_texture, 0.4f, 1.94f);
+	/* Font */
+	FT_Library ft;
+	init_freetype(&ft);
+	init_font(&font, combine_string(assets_path, "fonts/georgia_bold.ttf"), &ft);
+	/* Font */
+
+	/* Rectangle2D */
+	load_rectangle_2d(&rct, program_2d, gui_tex_1, 0.4f, 1.94f);
 	translate_rectangle_2d(&rct, -0.98f + rct.dimensions.x / 2.0f, 0);
-	/* Ortho Rectangle */
+	/* Rectangle2D */
 
 	while (!glfwWindowShouldClose(window)) {
 		process_input(window);
 
-		glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
+		glClearColor(0.3f, 0.3f, 0.3f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		/* Set the view and projection */
 		Vector3 pos_plus_front = add(&position, &front);
 		view = look_at(&position, &pos_plus_front, &up);
+		set_matrix4(text_program, "projection", &text_projection);
+		set_matrix4(program_2d, "projection", &projection);
 		/* Set the view and projection */
 
+		Vector2 t1_pos;
+		float text_width = get_text_width(&font, 1, "MODEL LOADING");
+		text_width = f_normalize(text_width, 0, window_width, 0, 1);
+		t1_pos.x = f_normalize(rct.position.x - text_width / 2.0f, -1, +1, 0, window_width);
+		t1_pos.y = f_normalize((rct.position.y + rct.dimensions.y / 2) * 0.9f, -1, +1, 0, window_height);
+		render_text(&font, text_program, "MODEL LOADING", t1_pos.x, t1_pos.y, 1, 1.0f, 1.0f, 0.0f);
 		draw_rectangle_2d(&rct);
 
 		glfwSwapBuffers(window);
@@ -80,6 +106,7 @@ int main() {
 	glfwDestroyWindow(window);
 	glfwTerminate();
 
+	printf("Ended successfully.\n\n");
 	return 0;
 }
 
@@ -131,7 +158,7 @@ GLFWwindow* init_gl_and_window(const char *title, uint16_t *window_width, uint16
 #ifdef __APPLE__
 	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #endif
-	glfwWindowHint(GLFW_SAMPLES, 1);
+	glfwWindowHint(GLFW_SAMPLES, 16); /* @Note: Is this even having any effect */
 
 	GLFWmonitor *monitor = glfwGetPrimaryMonitor();
 	const GLFWvidmode *video_mode = glfwGetVideoMode(monitor);
@@ -148,16 +175,34 @@ GLFWwindow* init_gl_and_window(const char *title, uint16_t *window_width, uint16
 	/* Mouse */
 	last_x = *window_width / 2.0f;
 	last_y = *window_height / 2.0f;
-	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL); /* @Note: Change this whenever necessary */
 	glfwSetCursorPosCallback(window, mouse_callback);
 	glfwSetScrollCallback(window, scroll_callback);
+	glfwSetMouseButtonCallback(window, mouse_button_callback);
 	/* Mouse */
 
 	/* glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); */
 	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_MULTISAMPLE);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glfwSwapInterval(1);
 
 	return window;
+}
+
+void mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
+	if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
+		double x_pos, y_pos;
+		glfwGetCursorPos(window, &x_pos, &y_pos);
+
+		/* Normalizing */
+		Vector2 norm_mouse_pos;
+		norm_mouse_pos.x = f_normalize(x_pos, 0, window_width, -1, +1);
+		norm_mouse_pos.y = f_normalize(y_pos, 0, window_height, +1, -1);
+		/* Normalizing */
+
+		// uint8_t clicked = in_rect(&norm_mouse_pos, &rct.position, &rct.dimensions);
+	}
 }
 
 void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
@@ -196,7 +241,7 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
 	position.z += (zoom_speed * front.z) * yoffset;
 }
 
-/* Model Loading */
+/* Rectangle2D */
 void load_rectangle_2d(Rectangle2D *rectangle_2d, GLuint program, GLuint texture_id, float w, float h) {
 	rectangle_2d->program = program;
 	rectangle_2d->texture_id = texture_id;
@@ -240,4 +285,4 @@ void draw_rectangle_2d(Rectangle2D *rectangle_2d) {
 	glBindVertexArray(rectangle_2d->vao);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 }
-/* Model Loading */
+/* Rectangle2D */

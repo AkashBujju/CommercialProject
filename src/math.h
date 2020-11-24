@@ -1,6 +1,8 @@
 #ifndef MY_MATH_H
 #define MY_MATH_H
 
+#include <stdint.h>
+
 /* Eqn of Line in vector form */
 struct LineEq {
 	float x, y, z;
@@ -108,5 +110,6 @@ LineEq form_line(Vector3 *p1, Vector3 *p2);
 Vector3 line_intersection(LineEq *l1, LineEq *l2);
 LineEq form_line(Vector3 *p1, Vector3 *p2);
 Vector3 line_intersect(LineEq *line_eq_1, LineEq *line_eq_2);
+uint8_t in_rect(Vector2 *mouse_pos, Vector2 *rect_position, Vector2 *rect_dimensions);
 
 #endif

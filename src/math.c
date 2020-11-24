@@ -613,6 +613,18 @@ Vector3 line_intersect(LineEq *line_eq_1, LineEq *line_eq_2) {
 	return result;
 }
 
+uint8_t in_rect(Vector2 *mouse_pos, Vector2 *rect_position, Vector2 *rect_dimensions) {
+	if(
+	  (mouse_pos->x > rect_position->x - (rect_dimensions->x / 2)) &&
+	  (mouse_pos->x < rect_position->x + (rect_dimensions->x / 2)) &&
+	  (mouse_pos->y < rect_position->y + (rect_dimensions->y / 2)) &&
+	  (mouse_pos->y > rect_position->y - (rect_dimensions->y / 2))) {
+		return 1;
+	}
+
+	return 0;
+}
+
 void print_line(LineEq *line_eq) {
 	printf("Vector form: a: %.2f, b: %.2f, c: %.2f :: %.2f %.2f %.2f\n", line_eq->a, line_eq->b, line_eq->c, line_eq->x, line_eq->y, line_eq->z);
 }

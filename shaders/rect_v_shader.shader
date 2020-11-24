@@ -6,6 +6,6 @@ out vec2 TexCoords;
 uniform vec2 pos;
 
 void main() {
-	gl_Position = vec4(aPos.xy + pos, 0.0, 1.0);
+	gl_Position = vec4(aPos + pos, 0.0, 1.0);
 	TexCoords = aTexturePos;
 }
