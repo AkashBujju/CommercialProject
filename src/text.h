@@ -22,7 +22,9 @@ typedef struct Font Font;
 
 void init_freetype(FT_Library *ft);
 void init_font(Font *font, const char* filepath, FT_Library *ft);
+Vector2 get_char_offset(Font *font, float scale, const char* text, uint16_t index);
 float get_text_width(Font *font, float scale, const char* text);
+float get_text_height(Font *font, float scale, const char* text);
 void render_text(Font *font, unsigned int program, const char* text, float x, float y, float scale, float r, float g, float b);
 
 #endif

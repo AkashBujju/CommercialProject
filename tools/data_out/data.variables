@@ -1,0 +1,12 @@
+SHADER program_2d rect_v_shader.shader texture_f_shader.shader
+SHADER text_program v_text.shader f_text.shader
+
+TEXTURE gui_tex_1 png/test_1.png
+TEXTURE cursor_texture png/cursor.png
+TEXTURE sample_tex_1 png/text_box.png
+
+FONT consolas fonts/consolas.ttf
+FONT georgia_bold fonts/georgia_bold.ttf
+
+CAMERA_FRONT 0 0 -1
+CAMERA_POSITION 0 0 10

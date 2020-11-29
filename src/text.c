@@ -60,6 +60,55 @@ void init_font(Font *font, const char* filepath, FT_Library *ft) {
 	glBindVertexArray(0);
 }
 
+Vector2 get_char_offset(Font *font, float scale, const char* text, uint16_t index) {
+	int text_length = -1;
+	while(text[++text_length] != '\0'){}
+
+	if(index >= text_length - 1) {
+		printf("WARNING get_char_pos(): index(%d) >= text_length(%d)\n", index, text_length);
+		Vector2 default_pos = { 0, 0 };
+		return default_pos;
+	}
+
+	Vector2 offset;
+	float width = 0, height;
+	for(int i = 0; i <= index; ++i) {
+		int ascii = (int)text[i];
+		Character *character = &font->characters[ascii];
+		GLfloat w = character->size.x * scale;
+		width += w;
+		if(i != index)
+			width += (character->advance >> 6) * scale;
+	}
+	offset.x = width;
+
+	float total_height = 0;
+	for(int i = 0; i < text_length; ++i) {
+		int ascii = (int)text[i];
+		Character *character = &font->characters[ascii];
+		GLfloat h = character->size.y * scale;
+		total_height += h;
+	}
+	offset.y = total_height / text_length;
+
+	return offset;
+}
+
+float get_text_height(Font *font, float scale, const char* text) {
+	int text_length = -1;
+	while(text[++text_length] != '\0'){}
+
+	float total_height = 0;
+	for(int i = 0; i < text_length; ++i) {
+		int ascii = (int)text[i];
+		Character *character = &font->characters[ascii];
+		GLfloat h = character->size.y * scale;
+		total_height += h;
+	}
+
+	return total_height / text_length;
+}
+
 float get_text_width(Font *font, float scale, const char* text) {
 	int text_length = -1;
 	while(text[++text_length] != '\0'){}

@@ -16,6 +16,9 @@ GLFWwindow* init_gl_and_window(const char*, uint16_t, uint16_t, uint8_t);
 void mouse_callback(GLFWwindow*, double, double);
 void scroll_callback(GLFWwindow*, double, double);
 
+uint16_t window_width = 1024;
+uint16_t window_height = 768;
+
 Vector3 front, position, up;
 static uint8_t first_mouse = 1;
 static float yaw = -90.0f;
@@ -28,8 +31,6 @@ const char* shaders_path = "../../shaders/";
 const char* tmp_models_path = "../data_out/";
 
 int main() {
-	uint16_t window_width = 1024;
-	uint16_t window_height = 768;
 	GLFWwindow *window = init_gl_and_window("CommercialProject", window_width, window_height, 0);
 
 	GLuint program = compile_shader(combine_string(shaders_path, "v_shader.shader"), combine_string(shaders_path, "f_shader.shader"));

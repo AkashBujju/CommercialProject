@@ -7,6 +7,11 @@ ToDo:
 * Try to draw the models
 
 Not Done:
+- Make the w, h relative to window dims.
+- A meta-program to load variable values
+- Have assets for all standard aspect ratios
+- Make sure we use open source assets(fonts, textures, etc.
+- Complete TextBox for the model editor
 - Mutiple light sources
 - Load the cone model
 - A simple hand movement bone animation (half done)
@@ -21,8 +26,8 @@ Done:
 
 Time available:
  - 1 November 2020 to 1 July 2021
- - Today 24 Nov 2020
- - Days remaining 218
+ - Today 29 Nov 2020
+ - Days remaining 213
 
 
 Plan is as follows:
