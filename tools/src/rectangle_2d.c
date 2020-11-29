@@ -42,5 +42,6 @@ void draw_rectangle_2d(Rectangle2D *rectangle_2d) {
 
 	glBindTexture(GL_TEXTURE_2D, rectangle_2d->texture_id);
 	glBindVertexArray(rectangle_2d->vao);
+
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 }

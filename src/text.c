@@ -60,12 +60,12 @@ void init_font(Font *font, const char* filepath, FT_Library *ft) {
 	glBindVertexArray(0);
 }
 
-Vector2 get_char_offset(Font *font, float scale, const char* text, uint16_t index) {
+Vector2 get_char_offset(Font *font, float scale, const char* text, int16_t index) {
 	int text_length = -1;
 	while(text[++text_length] != '\0'){}
 
-	if(index >= text_length - 1) {
-		printf("WARNING get_char_pos(): index(%d) >= text_length(%d)\n", index, text_length);
+	if(index >= text_length || index < 0) {
+		printf("WARNING get_char_pos(): index(%d) && text_length(%d). Setting pos to default.\n", index, text_length);
 		Vector2 default_pos = { 0, 0 };
 		return default_pos;
 	}
@@ -77,8 +77,7 @@ Vector2 get_char_offset(Font *font, float scale, const char* text, uint16_t inde
 		Character *character = &font->characters[ascii];
 		GLfloat w = character->size.x * scale;
 		width += w;
-		if(i != index)
-			width += (character->advance >> 6) * scale;
+		width += (character->advance >> 6) * scale;
 	}
 	offset.x = width;
 

@@ -113,8 +113,8 @@ void write_meta(MetaInfo *meta_info) {
 
 	// PROJECTIONS
 	fprintf(file, "\tmake_identity(&view);");
-	fprintf(file, "\tprojection = perspective(45.0f, (float)window_width / window_height, 0.1f, 500.0f);");
-	fprintf(file, "\ttext_projection = ortho(0, window_width, 0, window_height);");
+	fprintf(file, "\tprojection = perspective(45.0f, (float)window_width / window_height, 0.1f, 500.0f);\n");
+	fprintf(file, "\ttext_projection = ortho(0, window_width, 0, window_height);\n");
 	
 	fprintf(file, "%s\n", "}");
 	/* LOAD FUNCTION */

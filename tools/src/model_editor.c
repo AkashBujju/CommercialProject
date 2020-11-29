@@ -29,10 +29,12 @@ GLFWwindow* init_gl_and_window(const char*, uint16_t*, uint16_t*, uint8_t);
 void mouse_callback(GLFWwindow*, double, double);
 void scroll_callback(GLFWwindow*, double, double);
 void mouse_button_callback(GLFWwindow*, int, int, int);
+void key_callback(GLFWwindow*, int, int, int, int);
+void character_callback(GLFWwindow*, unsigned int);
 
 uint16_t window_width, window_height;
 GLuint program_2d, text_program;
-GLuint gui_tex_1, sample_tex, sample_tex_1, cursor_texture;
+GLuint gui_tex_1, sample_tex, box_texture, ht_box_texture, cursor_texture;
 Rectangle2D rct;
 TextBox text_box;
 Font consolas, georgia_bold;
@@ -48,7 +50,7 @@ int main() {
 	/* Rectangle2D */
 
 	/* Text Box */
-	init_textbox(&text_box, &georgia_bold, "TEXT_BOX", program_2d, sample_tex_1, cursor_texture);
+	init_textbox(&text_box, &georgia_bold, "TEXT_BOX", program_2d, box_texture, ht_box_texture, cursor_texture);
 	/* Text Box */
 
 	/* Text */
@@ -58,6 +60,7 @@ int main() {
 	/* Text */
 
 	while (!glfwWindowShouldClose(window)) {
+		float time = glfwGetTime();
 		process_input(window);
 
 		glClearColor(0.3f, 0.3f, 0.3f, 1.0f);
@@ -72,9 +75,9 @@ int main() {
 
 		set_text_position(&text, rct.position.x - text.normalized_dims.x / 2.0f, (rct.position.y + rct.dimensions.y / 2) * 0.9f);
 
-		show_text(&text, &georgia_bold, text_program);
+		show_text(&text, text_program);
 		draw_rectangle_2d(&rct);
-		draw_textbox(&text_box, &georgia_bold, text_program);
+		draw_textbox(&text_box, text_program, time);
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
@@ -89,6 +92,16 @@ int main() {
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
 	glViewport(0, 0, width, height);
+}
+
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
+    if(action == GLFW_PRESS) {
+		 handle_cursor_movement(&text_box, key);
+	 }
+}
+
+void character_callback(GLFWwindow* window, unsigned int codepoint) {
+	handle_text_input(&text_box, (char)codepoint);
 }
 
 void process_input(GLFWwindow *window) {
@@ -158,6 +171,9 @@ GLFWwindow* init_gl_and_window(const char *title, uint16_t *window_width, uint16
 	glfwSetMouseButtonCallback(window, mouse_button_callback);
 	/* Mouse */
 
+	glfwSetKeyCallback(window, key_callback);
+	glfwSetCharCallback(window, character_callback);	
+
 	/* glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); */
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_MULTISAMPLE);
@@ -178,7 +194,7 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 		norm_mouse_pos.y = f_normalize(y_pos, 0, window_height, +1, -1);
 		/* Normalizing */
 
-		uint8_t clicked = in_rect(&norm_mouse_pos, &rct.position, &rct.dimensions);
+		handle_textbox_click(&text_box, &norm_mouse_pos);
 	}
 }
 

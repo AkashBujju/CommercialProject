@@ -90,6 +90,24 @@ Material get_material_info_from_file(const char* filename, char* material_name) 
 	return material;
 }
 
+void insert_char_into_string(char* src, char ch, uint16_t index) {
+	uint16_t len = strlen(src);
+	if(index == len) {
+		src[index] = ch;
+		src[index + 1] = '\0';
+	}
+	else if(index > len - 1) {
+		printf("WARNING insert_char_into_string(): index(%d) >= len(%d).\n", index, len);
+	}
+	else {
+		for(uint16_t i = len - 1; i >= index && i <= len - 1; --i)
+			src[i + 1] = src[i];
+
+		src[index] = ch;
+		src[len + 1] = '\0';
+	}
+}
+
 char* combine_string(const char* str_1, const char* str_2) {
 	unsigned int len = 100;
 	char* str = (char*)malloc(sizeof(char) * len);

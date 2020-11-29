@@ -28,6 +28,6 @@ void set_text(Text *text, char* string) {
 	text->normalized_dims.y = f_normalize(get_text_height(text->font, 1, text->text), 0, window_height, 0, 1);
 }
 
-void show_text(Text *text, Font *font, GLuint program) {
-	render_text(font, program, text->text, text->position.x, text->position.y, 1, text->color.x, text->color.y, text->color.z);
+void show_text(Text *text, GLuint program) {
+	render_text(text->font, program, text->text, text->position.x, text->position.y, 1, text->color.x, text->color.y, text->color.z);
 }

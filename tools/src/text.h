@@ -15,7 +15,7 @@ typedef struct Text {
 } Text;
 
 void init_text(Text *text, Font *font, char* string, float norm_x, float norm_y, float r, float g, float b);
-void show_text(Text *text, Font *font, GLuint program);
+void show_text(Text *text, GLuint program);
 void set_text(Text *text, char* string);
 void set_text_position(Text *text, float norm_x, float norm_y);
 

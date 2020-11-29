@@ -640,7 +640,7 @@ void print_matrix(Matrix4 *mat) {
 }
 
 void print_vector2(Vector2 *vec) {
-	printf("%.2f %.2f\n", vec->x, vec->y);
+	printf("%.4f %.4f\n", vec->x, vec->y);
 }
 
 void print_vector(Vector3 *vec) {

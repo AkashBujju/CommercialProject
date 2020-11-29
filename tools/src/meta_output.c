@@ -18,7 +18,8 @@ extern GLuint program_2d;
 extern GLuint text_program;
 extern GLuint gui_tex_1;
 extern GLuint cursor_texture;
-extern GLuint sample_tex_1;
+extern GLuint box_texture;
+extern GLuint ht_box_texture;
 extern Font consolas;
 extern Font georgia_bold;
 
@@ -28,7 +29,8 @@ void load() {
 
 	gui_tex_1 = make_texture(combine_string(assets_path, "png/test_1.png"));
 	cursor_texture = make_texture(combine_string(assets_path, "png/cursor.png"));
-	sample_tex_1 = make_texture(combine_string(assets_path, "png/text_box.png"));
+	box_texture = make_texture(combine_string(assets_path, "png/text_box.png"));
+	ht_box_texture = make_texture(combine_string(assets_path, "png/text_box_ht.png"));
 
 	FT_Library ft_1;
 	init_freetype(&ft_1);
@@ -41,5 +43,7 @@ void load() {
 	init_vector(&front, 0.000, 0.000, -1.000);
 	init_vector(&position, 0.000, 0.000, 10.000);
 	init_vector(&up, 0, 1, 0);
-	make_identity(&view);	projection = perspective(45.0f, (float)window_width / window_height, 0.1f, 500.0f);	text_projection = ortho(0, window_width, 0, window_height);}
+	make_identity(&view);	projection = perspective(45.0f, (float)window_width / window_height, 0.1f, 500.0f);
+	text_projection = ortho(0, window_width, 0, window_height);
+}
 
