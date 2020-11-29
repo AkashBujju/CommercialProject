@@ -20,6 +20,8 @@ extern GLuint gui_tex_1;
 extern GLuint cursor_texture;
 extern GLuint box_texture;
 extern GLuint ht_box_texture;
+extern GLuint button_texture;
+extern GLuint button_texture_ht;
 extern Font consolas;
 extern Font georgia_bold;
 
@@ -31,6 +33,8 @@ void load() {
 	cursor_texture = make_texture(combine_string(assets_path, "png/cursor.png"));
 	box_texture = make_texture(combine_string(assets_path, "png/text_box.png"));
 	ht_box_texture = make_texture(combine_string(assets_path, "png/text_box_ht.png"));
+	button_texture = make_texture(combine_string(assets_path, "png/button_box.png"));
+	button_texture_ht = make_texture(combine_string(assets_path, "png/button_box_ht.png"));
 
 	FT_Library ft_1;
 	init_freetype(&ft_1);

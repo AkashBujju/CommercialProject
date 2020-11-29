@@ -48,7 +48,7 @@ int main() {
 	read_data(&meta_info);
 	write_meta(&meta_info);
 	
-	printf("Ended.\n\n");
+	printf("Ran data_load.c\n\n");
 	return 0;
 }
 

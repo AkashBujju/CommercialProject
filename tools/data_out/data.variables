@@ -5,6 +5,8 @@ TEXTURE gui_tex_1 png/test_1.png
 TEXTURE cursor_texture png/cursor.png
 TEXTURE box_texture png/text_box.png
 TEXTURE ht_box_texture png/text_box_ht.png
+TEXTURE button_texture png/button_box.png
+TEXTURE button_texture_ht png/button_box_ht.png
 
 FONT consolas fonts/consolas.ttf
 FONT georgia_bold fonts/georgia_bold.ttf

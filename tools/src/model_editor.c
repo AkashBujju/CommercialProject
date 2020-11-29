@@ -9,6 +9,7 @@
 #include "text.h"
 #include "rectangle_2d.h"
 #include "text_box.h"
+#include "button.h"
 
 #include "meta_output.h"
 
@@ -34,9 +35,10 @@ void character_callback(GLFWwindow*, unsigned int);
 
 uint16_t window_width, window_height;
 GLuint program_2d, text_program;
-GLuint gui_tex_1, sample_tex, box_texture, ht_box_texture, cursor_texture;
+GLuint gui_tex_1, box_texture, ht_box_texture, button_texture, button_texture_ht, cursor_texture;
 Rectangle2D rct;
 TextBox text_box;
+Button load_model_button;
 Font consolas, georgia_bold;
 Matrix4 view, projection, text_projection;
 
@@ -49,15 +51,21 @@ int main() {
 	translate_rectangle_2d(&rct, -0.98f + rct.dimensions.x / 2.0f, 0);
 	/* Rectangle2D */
 
-	/* Text Box */
-	init_textbox(&text_box, &georgia_bold, "TEXT_BOX", program_2d, box_texture, ht_box_texture, cursor_texture);
-	/* Text Box */
-
 	/* Text */
 	Text text;
-	init_text(&text, &georgia_bold, "HELLO, WORLD", -0.25f, +0.5f, 1, 1, 0);
-	set_text(&text, "LOAD MODEL");
+	init_text(&text, &georgia_bold, "", -0.25f, +0.5f, 1, 1, 0);
+	set_text(&text, "Load Model");
+	set_text_position(&text, rct.position.x - text.normalized_dims.x / 2.0f, (rct.position.y + rct.dimensions.y / 2) * 0.9f);
 	/* Text */
+
+	/* Text Box */
+	init_textbox(&text_box, &georgia_bold, "Enter..", program_2d, box_texture, ht_box_texture, cursor_texture);
+	set_textbox_position(&text_box, rct.position.x - rct.dimensions.x * 0.4f + text_box.box.dimensions.x * 0.5f, rct.position.y + (rct.dimensions.y / 2) * 0.75f);
+	/* Text Box */
+
+	/* Load model button */
+	init_button(&load_model_button, &georgia_bold, "Ok", program_2d, button_texture, button_texture_ht, 0.05f, 0.08f);
+	/* Load model button */
 
 	while (!glfwWindowShouldClose(window)) {
 		float time = glfwGetTime();
@@ -73,11 +81,10 @@ int main() {
 		set_matrix4(program_2d, "projection", &projection);
 		/* Set the view and projection */
 
-		set_text_position(&text, rct.position.x - text.normalized_dims.x / 2.0f, (rct.position.y + rct.dimensions.y / 2) * 0.9f);
-
 		show_text(&text, text_program);
-		draw_rectangle_2d(&rct);
 		draw_textbox(&text_box, text_program, time);
+		draw_button(&load_model_button, text_program);
+		draw_rectangle_2d(&rct);
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();

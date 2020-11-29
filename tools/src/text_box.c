@@ -48,7 +48,7 @@ void init_textbox(TextBox *text_box, Font *font, char* string, GLuint rectangle_
 	load_rectangle_2d(&text_box->cursor, rectangle_2d_program, cursor_texture_id, text_box->box.dimensions.x * 0.02f, text_box->box.dimensions.y * 0.5f);
 
 	init_text(&text_box->text, font, string, 0, 0, 1, 1, 0);
-	set_text_position(&text_box->text, text_box->box.position.x - (text_box->box.dimensions.x / 2.0f) * 0.85f, text_box->box.position.y - text_box->text.normalized_dims.y);
+	set_text_position(&text_box->text, text_box->box.position.x - (text_box->box.dimensions.x / 2.0f) * 0.85f, text_box->box.position.y - text_box->text.normalized_dims.y / 2.0f);
 
 	if(strlen(string) >= 1)
 		text_box->cursor_index = 0;
@@ -88,7 +88,9 @@ void handle_textbox_click(TextBox *text_box, Vector2 *norm_mouse_pos) {
 }
 
 void set_textbox_position(TextBox *text_box, float norm_x, float norm_y) {
-
+	translate_rectangle_2d(&text_box->box, norm_x, norm_y);
+	set_text_position(&text_box->text, text_box->box.position.x - (text_box->box.dimensions.x / 2.0f) * 0.85f, text_box->box.position.y - text_box->text.normalized_dims.y);
+	set_cursor_pos(text_box);
 }
 
 void draw_textbox(TextBox *text_box, GLuint text_program, float current_time) {
