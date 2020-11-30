@@ -1,5 +1,6 @@
 #include "rectangle_2d.h"
 #include "../../src/shader.h"
+#include <math.h>
 
 void load_rectangle_2d(Rectangle2D *rectangle_2d, GLuint program, GLuint texture_id, float w, float h) {
 	rectangle_2d->program = program;
@@ -31,9 +32,14 @@ void load_rectangle_2d(Rectangle2D *rectangle_2d, GLuint program, GLuint texture
 	glEnableVertexAttribArray(1);
 }
 
-void translate_rectangle_2d(Rectangle2D *rct, float x, float y) {
-	rct->position.x = x;
-	rct->position.y = y;
+void translate_rectangle_2d(Rectangle2D *rct, float norm_x, float norm_y) {
+	rct->position.x = norm_x;
+	rct->position.y = norm_y;
+}
+
+void translate_rectangle_2d_by(Rectangle2D *rct, float norm_dx, float norm_dy) {
+	rct->position.x += norm_dx;
+	rct->position.y += norm_dy;
 }
 
 void draw_rectangle_2d(Rectangle2D *rectangle_2d) {

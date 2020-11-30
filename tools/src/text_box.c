@@ -1,6 +1,7 @@
 #include "text_box.h"
 #include <GLFW/glfw3.h>
 #include "../../src/utils.h"
+#include <math.h>
 
 extern GLuint program_2d;
 extern uint16_t window_width;
@@ -91,6 +92,12 @@ void set_textbox_position(TextBox *text_box, float norm_x, float norm_y) {
 	translate_rectangle_2d(&text_box->box, norm_x, norm_y);
 	set_text_position(&text_box->text, text_box->box.position.x - (text_box->box.dimensions.x / 2.0f) * 0.85f, text_box->box.position.y - text_box->text.normalized_dims.y);
 	set_cursor_pos(text_box);
+}
+
+void translate_textbox_by(TextBox *text_box, float norm_dx, float norm_dy) {
+	translate_rectangle_2d_by(&text_box->box, norm_dx, norm_dy);
+	translate_rectangle_2d_by(&text_box->cursor, norm_dx, norm_dy);
+	translate_text_by(&text_box->text, norm_dx, norm_dy);
 }
 
 void draw_textbox(TextBox *text_box, GLuint text_program, float current_time) {

@@ -21,6 +21,7 @@ void handle_cursor_movement(TextBox *text_box, int key);
 void handle_text_input(TextBox *text_box, char c);
 void handle_textbox_click(TextBox *text_box, Vector2 *norm_mouse_pos);
 void set_textbox_position(TextBox *text_box, float norm_x, float norm_y);
+void translate_textbox_by(TextBox *text_box, float norm_dx, float norm_dy);
 void draw_textbox(TextBox *text_box, GLuint text_program, float current_time);
 
 #endif

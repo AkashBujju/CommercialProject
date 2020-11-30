@@ -14,27 +14,27 @@ extern Matrix4 text_projection;
 extern Vector3 front;
 extern Vector3 position;
 extern Vector3 up;
-extern GLuint program_2d;
+extern GLuint rectangle_program;
 extern GLuint text_program;
-extern GLuint gui_tex_1;
+extern GLuint background_left_texture;
 extern GLuint cursor_texture;
 extern GLuint box_texture;
 extern GLuint ht_box_texture;
 extern GLuint button_texture;
-extern GLuint button_texture_ht;
+extern GLuint ht_button_texture;
 extern Font consolas;
 extern Font georgia_bold;
 
 void load() {
-	program_2d = compile_shader(combine_string(shaders_path, "rect_v_shader.shader"), combine_string(shaders_path, "texture_f_shader.shader"));
+	rectangle_program = compile_shader(combine_string(shaders_path, "rect_v_shader.shader"), combine_string(shaders_path, "texture_f_shader.shader"));
 	text_program = compile_shader(combine_string(shaders_path, "v_text.shader"), combine_string(shaders_path, "f_text.shader"));
 
-	gui_tex_1 = make_texture(combine_string(assets_path, "png/test_1.png"));
+	background_left_texture = make_texture(combine_string(assets_path, "png/test_1.png"));
 	cursor_texture = make_texture(combine_string(assets_path, "png/cursor.png"));
 	box_texture = make_texture(combine_string(assets_path, "png/text_box.png"));
 	ht_box_texture = make_texture(combine_string(assets_path, "png/text_box_ht.png"));
 	button_texture = make_texture(combine_string(assets_path, "png/button_box.png"));
-	button_texture_ht = make_texture(combine_string(assets_path, "png/button_box_ht.png"));
+	ht_button_texture = make_texture(combine_string(assets_path, "png/button_box_ht.png"));
 
 	FT_Library ft_1;
 	init_freetype(&ft_1);

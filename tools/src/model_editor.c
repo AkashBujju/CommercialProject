@@ -6,11 +6,14 @@
 #include "../../src/shader.h"
 #include "../../src/utils.h"
 #include "../../src/math.h"
+/*
 #include "text.h"
 #include "rectangle_2d.h"
 #include "text_box.h"
 #include "button.h"
+*/
 
+#include "gui.h"
 #include "meta_output.h"
 
 Vector3 front, position, up;
@@ -33,39 +36,22 @@ void mouse_button_callback(GLFWwindow*, int, int, int);
 void key_callback(GLFWwindow*, int, int, int, int);
 void character_callback(GLFWwindow*, unsigned int);
 
+void check_and_hide_leftside_gui();
+
 uint16_t window_width, window_height;
-GLuint program_2d, text_program;
-GLuint gui_tex_1, box_texture, ht_box_texture, button_texture, button_texture_ht, cursor_texture;
-Rectangle2D rct;
-TextBox text_box;
-Button load_model_button;
-Font consolas, georgia_bold;
 Matrix4 view, projection, text_projection;
+
+GLuint rectangle_program, text_program;
+GLuint background_left_texture, box_texture, ht_box_texture, button_texture, ht_button_texture, cursor_texture;
+
+Font consolas, georgia_bold;
+EditorGUI editor_gui;
 
 int main() {
 	GLFWwindow *window = init_gl_and_window("Model Editor", &window_width, &window_height, 1);
 	load();
 
-	/* Rectangle2D */
-	load_rectangle_2d(&rct, program_2d, gui_tex_1, 0.4f, 1.94f);
-	translate_rectangle_2d(&rct, -0.98f + rct.dimensions.x / 2.0f, 0);
-	/* Rectangle2D */
-
-	/* Text */
-	Text text;
-	init_text(&text, &georgia_bold, "", -0.25f, +0.5f, 1, 1, 0);
-	set_text(&text, "Load Model");
-	set_text_position(&text, rct.position.x - text.normalized_dims.x / 2.0f, (rct.position.y + rct.dimensions.y / 2) * 0.9f);
-	/* Text */
-
-	/* Text Box */
-	init_textbox(&text_box, &georgia_bold, "Enter..", program_2d, box_texture, ht_box_texture, cursor_texture);
-	set_textbox_position(&text_box, rct.position.x - rct.dimensions.x * 0.4f + text_box.box.dimensions.x * 0.5f, rct.position.y + (rct.dimensions.y / 2) * 0.75f);
-	/* Text Box */
-
-	/* Load model button */
-	init_button(&load_model_button, &georgia_bold, "Ok", program_2d, button_texture, button_texture_ht, 0.05f, 0.08f);
-	/* Load model button */
+	init_editor_gui(&editor_gui, &georgia_bold, 0.007f, 55);
 
 	while (!glfwWindowShouldClose(window)) {
 		float time = glfwGetTime();
@@ -78,13 +64,11 @@ int main() {
 		Vector3 pos_plus_front = add(&position, &front);
 		view = look_at(&position, &pos_plus_front, &up);
 		set_matrix4(text_program, "projection", &text_projection);
-		set_matrix4(program_2d, "projection", &projection);
+		set_matrix4(rectangle_program, "projection", &projection);
 		/* Set the view and projection */
 
-		show_text(&text, text_program);
-		draw_textbox(&text_box, text_program, time);
-		draw_button(&load_model_button, text_program);
-		draw_rectangle_2d(&rct);
+		handle_transition_gui(&editor_gui, 1, 0);
+		draw_editor_gui(&editor_gui, time);
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
@@ -102,13 +86,15 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
 }
 
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
-    if(action == GLFW_PRESS) {
-		 handle_cursor_movement(&text_box, key);
+    if(action == GLFW_PRESS)
+		handle_key_input_gui(&editor_gui, key);
+	 if(key == GLFW_KEY_TAB && action == GLFW_PRESS) {
+		 editor_gui.trn.activate = 1;
 	 }
 }
 
 void character_callback(GLFWwindow* window, unsigned int codepoint) {
-	handle_text_input(&text_box, (char)codepoint);
+	handle_textinput_gui(&editor_gui, (char)codepoint);
 }
 
 void process_input(GLFWwindow *window) {
@@ -201,7 +187,9 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 		norm_mouse_pos.y = f_normalize(y_pos, 0, window_height, +1, -1);
 		/* Normalizing */
 
-		handle_textbox_click(&text_box, &norm_mouse_pos);
+		handle_mouse_click_gui(&editor_gui, &norm_mouse_pos, button);
+		// handle_textbox_click(&text_box, &norm_mouse_pos);
+		// uint8_t load_button_clicked = button_clicked(&load_model_button, &norm_mouse_pos);
 	}
 }
 
