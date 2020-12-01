@@ -6,13 +6,6 @@
 #include "../../src/shader.h"
 #include "../../src/utils.h"
 #include "../../src/math.h"
-/*
-#include "text.h"
-#include "rectangle_2d.h"
-#include "text_box.h"
-#include "button.h"
-*/
-
 #include "gui.h"
 #include "meta_output.h"
 
@@ -36,11 +29,8 @@ void mouse_button_callback(GLFWwindow*, int, int, int);
 void key_callback(GLFWwindow*, int, int, int, int);
 void character_callback(GLFWwindow*, unsigned int);
 
-void check_and_hide_leftside_gui();
-
 uint16_t window_width, window_height;
 Matrix4 view, projection, text_projection;
-
 GLuint rectangle_program, text_program;
 GLuint background_left_texture, box_texture, ht_box_texture, button_texture, ht_button_texture, cursor_texture;
 
@@ -54,7 +44,7 @@ int main() {
 	init_editor_gui(&editor_gui, &georgia_bold, 0.007f, 55);
 
 	while (!glfwWindowShouldClose(window)) {
-		float time = glfwGetTime();
+		float current_time = glfwGetTime();
 		process_input(window);
 
 		glClearColor(0.3f, 0.3f, 0.3f, 1.0f);
@@ -68,7 +58,7 @@ int main() {
 		/* Set the view and projection */
 
 		handle_transition_gui(&editor_gui, 1, 0);
-		draw_editor_gui(&editor_gui, time);
+		draw_editor_gui(&editor_gui, current_time);
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
@@ -104,7 +94,6 @@ void process_input(GLFWwindow *window) {
 	if(glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
 		Vector3 res = cross(&front, &up);
 		normalize_vector(&res);
-
 		position.x -= camera_speed * res.x;
 		position.y -= camera_speed * res.y;
 		position.z -= camera_speed * res.z;
@@ -112,7 +101,6 @@ void process_input(GLFWwindow *window) {
 	if(glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
 		Vector3 res = cross(&front, &up);
 		normalize_vector(&res);
-
 		position.x += camera_speed * res.x;
 		position.y += camera_speed * res.y;
 		position.z += camera_speed * res.z;
@@ -188,8 +176,6 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 		/* Normalizing */
 
 		handle_mouse_click_gui(&editor_gui, &norm_mouse_pos, button);
-		// handle_textbox_click(&text_box, &norm_mouse_pos);
-		// uint8_t load_button_clicked = button_clicked(&load_model_button, &norm_mouse_pos);
 	}
 }
 
