@@ -36,7 +36,8 @@ int main() {
 	GLuint program = compile_shader(combine_string(shaders_path, "v_shader.shader"), combine_string(shaders_path, "f_shader.shader"));
 	GLuint instanced_program = compile_shader(combine_string(shaders_path, "instanced_v_shader.shader"), combine_string(shaders_path, "instanced_f_shader.shader"));
 	GLuint bone_program = compile_shader(combine_string(shaders_path, "bone_v_shader.shader"), combine_string(shaders_path, "bone_f_shader.shader"));
-	GLuint light_program = compile_shader(combine_string(shaders_path, "v_light.shader"), combine_string(shaders_path, "f_light.shader"));
+	GLuint dir_light_program = compile_shader(combine_string(shaders_path, "v_dir_light.shader"), combine_string(shaders_path, "f_dir_light.shader"));
+	GLuint spot_light_program = compile_shader(combine_string(shaders_path, "v_spot_light.shader"), combine_string(shaders_path, "f_spot_light.shader"));
 
 	/* Init view and projection */
 	Matrix4 view, projection;
@@ -60,11 +61,18 @@ int main() {
 
 	/* Lights */
 	InstancedDirLight instanced_dir_light;
-	load_instanced_dir_light(&instanced_dir_light, light_program, combine_string(tmp_models_path, "light_cube.model"), 2);
+	load_instanced_dir_light(&instanced_dir_light, dir_light_program, combine_string(tmp_models_path, "light_cube.model"), 2);
 	translate_instanced_dir_light(&instanced_dir_light, 0, 5, 2, 3);
 	translate_instanced_dir_light(&instanced_dir_light, 1, -5, 2, 3);
 	scale_instanced_dir_light(&instanced_dir_light, 0, 0.1f, 0.1f, 0.1f);
 	scale_instanced_dir_light(&instanced_dir_light, 1, 0.1f, 0.1f, 0.1f);
+
+	InstancedSpotLight instanced_spot_light;
+	load_instanced_spot_light(&instanced_spot_light, spot_light_program, combine_string(tmp_models_path, "light_cube.model"), 2);
+	translate_instanced_spot_light(&instanced_spot_light, 0, -2, 0, 5);
+	translate_instanced_spot_light(&instanced_spot_light, 1, +2, 0, 5);
+	scale_instanced_spot_light(&instanced_spot_light, 0, 0.1f, 0.1f, 0.1f);
+	scale_instanced_spot_light(&instanced_spot_light, 1, 0.1f, 0.1f, 0.1f);
 	/* Lights */
 
 	/* Bones */
@@ -95,8 +103,10 @@ int main() {
 		set_matrix4(program, "projection", &projection);
 		set_matrix4(instanced_program, "view", &view);
 		set_matrix4(instanced_program, "projection", &projection);
-		set_matrix4(light_program, "view", &view);
-		set_matrix4(light_program, "projection", &projection);
+		set_matrix4(dir_light_program, "view", &view);
+		set_matrix4(dir_light_program, "projection", &projection);
+		set_matrix4(spot_light_program, "view", &view);
+		set_matrix4(spot_light_program, "projection", &projection);
 		/* Set the view and projection */
 
 		/* Moving the light */
@@ -122,12 +132,37 @@ int main() {
 		set_vector3(instanced_program, "dir_lights[1].diffuse", &diffuse_color);
 		set_vector3(instanced_program, "dir_lights[1].specular", &specular_color);
 		set_vector3(instanced_program, "dir_lights[1].position", &instanced_dir_light.positions[1]);
+
+		Vector3 direction = { 0, 0, -1 };
+		set_vector3(instanced_program, "spot_lights[0].ambient", &ambient_color);
+		set_vector3(instanced_program, "spot_lights[0].diffuse", &diffuse_color);
+		set_vector3(instanced_program, "spot_lights[0].specular", &specular_color);
+		set_vector3(instanced_program, "spot_lights[0].position", &instanced_spot_light.positions[0]);
+		set_vector3(instanced_program, "spot_lights[0].direction", &direction);
+		set_float(instanced_program, "spot_lights[0].cutOff", cos(to_radians(12.5f)));
+		set_float(instanced_program, "spot_lights[0].outerCutOff", cos(to_radians(17.5f)));
+		set_float(instanced_program, "spot_lights[0].constant", 1);
+		set_float(instanced_program, "spot_lights[0].linear", 0.09f);
+		set_float(instanced_program, "spot_lights[0].quadratic", 0.032f);
+
+		set_vector3(instanced_program, "spot_lights[1].ambient", &ambient_color);
+		set_vector3(instanced_program, "spot_lights[1].diffuse", &diffuse_color);
+		set_vector3(instanced_program, "spot_lights[1].specular", &specular_color);
+		set_vector3(instanced_program, "spot_lights[1].position", &instanced_spot_light.positions[1]);
+		set_vector3(instanced_program, "spot_lights[1].direction", &direction);
+		set_float(instanced_program, "spot_lights[1].cutOff", cos(to_radians(12.5f)));
+		set_float(instanced_program, "spot_lights[1].outerCutOff", cos(to_radians(17.5f)));
+		set_float(instanced_program, "spot_lights[1].constant", 1);
+		set_float(instanced_program, "spot_lights[1].linear", 0.09f);
+		set_float(instanced_program, "spot_lights[1].quadratic", 0.032f);
+
 		set_vector3(instanced_program, "viewPos", &position);
 		draw_instanced_model(&im);
 		/* Instanced Model */
 
 		/* Light */
 		draw_instanced_dir_light(&instanced_dir_light);
+		draw_instanced_spot_light(&instanced_spot_light);
 		/* Light */
 
 		/* Bones */

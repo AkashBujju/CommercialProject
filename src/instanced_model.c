@@ -158,7 +158,7 @@ void load_instanced_model(InstancedModel *instanced_model, GLuint program, const
 
 void translate_instanced_model(InstancedModel *instanced_model, uint32_t model_index, float x, float y, float z) {
 	if(model_index >= instanced_model->num_models) {
-		printf("WARNING: In translate_instanced_model(): model_index(%d) >= num_models(%d)\n", model_index, instanced_model->num_models);
+		printf("WARNING: In translate_instanced_model(): model_index(%u) >= num_models(%u)\n", model_index, instanced_model->num_models);
 	}
 	else {
 		instanced_model->positions[model_index].x = x;
@@ -169,7 +169,7 @@ void translate_instanced_model(InstancedModel *instanced_model, uint32_t model_i
 
 void scale_instanced_model(InstancedModel *instanced_model, uint32_t model_index, float x, float y, float z) {
 	if(model_index >= instanced_model->num_models) {
-		printf("WARNING: In scale_instanced_model(): model_index(%d) >= num_models(%d)\n", model_index, instanced_model->num_models);
+		printf("WARNING: In scale_instanced_model(): model_index(%u) >= num_models(%u)\n", model_index, instanced_model->num_models);
 	}
 	else {
 		instanced_model->scales[model_index].x = x;
@@ -184,7 +184,7 @@ void scale_instanced_model(InstancedModel *instanced_model, uint32_t model_index
 
 void set_material_instanced_model(InstancedModel *instanced_model, uint32_t model_index, char* material_name) {
 	if(model_index >= instanced_model->num_models) {
-		printf("WARNING: In set_color_instanced_model(): model_index(%d) >= num_models(%d)\n", model_index, instanced_model->num_models);
+		printf("WARNING: In set_color_instanced_model(): model_index(%u) >= num_models(%u)\n", model_index, instanced_model->num_models);
 	}
 	else {
 		Material material = get_material_info_from_file(combine_string(assets_path, "materials/materials.info"), material_name);
@@ -209,7 +209,7 @@ void set_material_instanced_model(InstancedModel *instanced_model, uint32_t mode
 
 void rotate_instanced_model(InstancedModel *instanced_model, uint32_t model_index, float x, float y, float z, float degree) {
 	if(model_index >= instanced_model->num_models) {
-		printf("WARNING: In rotate_instanced_model(): model_index(%d) >= num_models(%d)\n", model_index, instanced_model->num_models);
+		printf("WARNING: In rotate_instanced_model(): model_index(%u) >= num_models(%u)\n", model_index, instanced_model->num_models);
 	}
 	else {
 		instanced_model->angle_in_degree[model_index] = degree;
