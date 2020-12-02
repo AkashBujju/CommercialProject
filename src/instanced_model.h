@@ -5,6 +5,7 @@
 
 #include <glad/glad.h>
 #include "math.h"
+#include "light.h"
 
 typedef struct InstancedModel {
 	GLuint program, vao, vbo;
@@ -34,6 +35,6 @@ void translate_instanced_model(InstancedModel *instanced_model, uint32_t model_i
 void scale_instanced_model(InstancedModel *instanced_model, uint32_t model_index, float x, float y, float z);
 void rotate_instanced_model(InstancedModel *instanced_model, uint32_t model_index, float x, float y, float z, float degree);
 void set_material_instanced_model(InstancedModel *instanced_model, uint32_t model_index, char* material_name);
-void draw_instanced_model(InstancedModel *instanced_model);
+void draw_instanced_model(InstancedModel *instanced_model, InstancedDirLight *instanced_dir_light, InstancedSpotLight *instanced_spot_light);
 
 #endif

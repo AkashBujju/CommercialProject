@@ -93,7 +93,7 @@ void load_instanced_model(InstancedModel *instanced_model, GLuint program, const
 		glEnableVertexAttribArray(1);
 		/* Position and Normals */
 
-		/* Instanced Model Data */
+		/* Instanced Model Attrib */
 		glEnableVertexAttribArray(2);
 		glBindBuffer(GL_ARRAY_BUFFER, instanced_model->instanceModelVBO);
     	glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, 16 * sizeof(float), (void*)0);
@@ -117,39 +117,39 @@ void load_instanced_model(InstancedModel *instanced_model, GLuint program, const
     	glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, 16 * sizeof(float), (void*)(12 * sizeof(float)));
     	glBindBuffer(GL_ARRAY_BUFFER, 0);
     	glVertexAttribDivisor(5, 1);
-		/* Instanced Model Data */
+		/* Instanced Model Attrib */
 
-		/* Instanced Ambient Data */
+		/* Instanced Ambient Attrib */
 		glEnableVertexAttribArray(6);
 		glBindBuffer(GL_ARRAY_BUFFER, instanced_model->instanceAmbientVBO);
     	glVertexAttribPointer(6, 3, GL_FLOAT, GL_TRUE, 3 * sizeof(float), (void*)0);
     	glBindBuffer(GL_ARRAY_BUFFER, 0);
     	glVertexAttribDivisor(6, 1);
-		/* Instanced Ambient Data */
+		/* Instanced Ambient Attrib */
 
-		/* Instanced Diffuse Data */
+		/* Instanced Diffuse Attrib */
 		glEnableVertexAttribArray(7);
 		glBindBuffer(GL_ARRAY_BUFFER, instanced_model->instanceDiffuseVBO);
     	glVertexAttribPointer(7, 3, GL_FLOAT, GL_TRUE, 3 * sizeof(float), (void*)0);
     	glBindBuffer(GL_ARRAY_BUFFER, 0);
     	glVertexAttribDivisor(7, 1);
-		/* Instanced Diffuse Data */
+		/* Instanced Diffuse Attrib */
 
-		/* Instanced Specular Data */
+		/* Instanced Specular Attrib */
 		glEnableVertexAttribArray(8);
 		glBindBuffer(GL_ARRAY_BUFFER, instanced_model->instanceSpecularVBO);
     	glVertexAttribPointer(8, 3, GL_FLOAT, GL_TRUE, 3 * sizeof(float), (void*)0);
     	glBindBuffer(GL_ARRAY_BUFFER, 0);
     	glVertexAttribDivisor(8, 1);
-		/* Instanced Specular Data */
+		/* Instanced Specular Attrib */
 
-		/* Instanced Shininess Data */
+		/* Instanced Shininess Attrib */
 		glEnableVertexAttribArray(9);
 		glBindBuffer(GL_ARRAY_BUFFER, instanced_model->instanceShininessVBO);
     	glVertexAttribPointer(9, 1, GL_FLOAT, GL_FALSE, sizeof(float), (void*)0);
     	glBindBuffer(GL_ARRAY_BUFFER, 0);
     	glVertexAttribDivisor(9, 1);
-		/* Instanced Shininess Data */
+		/* Instanced Shininess Attrib */
 
 		/* @Note: Is this okay at this point?
 		free(vertices); */
@@ -219,7 +219,19 @@ void rotate_instanced_model(InstancedModel *instanced_model, uint32_t model_inde
 	}
 }
 
-void draw_instanced_model(InstancedModel *instanced_model) {
+static void make_glsl_string(char *des, uint16_t index, char *var_name, char *member_name) {
+	strcpy(des, var_name);
+	strcat(des, "[");
+
+	char index_str[15];
+	sprintf(index_str, "%u", index);
+
+	strcat(des, index_str);
+	strcat(des, "].");
+	strcat(des, member_name);
+}
+
+void draw_instanced_model(InstancedModel *instanced_model, InstancedDirLight *instanced_dir_light, InstancedSpotLight *instanced_spot_light) {
 	glUseProgram(instanced_model->program);
 
 	/* Updating in-struct Model Matrix */
@@ -244,6 +256,26 @@ void draw_instanced_model(InstancedModel *instanced_model) {
 	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(Matrix4) * instanced_model->num_models, instanced_model->models);
    glBindBuffer(GL_ARRAY_BUFFER, 0);
 	/* Updating ModelVBO */
+
+	/* Directional Lights */
+	set_integer(instanced_model->program, "num_dir_lights", instanced_dir_light->num_models);
+	for(uint32_t di = 0; di < instanced_dir_light->num_models; ++di) {
+		char var_name[50];
+		make_glsl_string(var_name, di, "dir_lights", "position");
+		set_vector3(instanced_model->program, var_name, &instanced_dir_light->positions[di]);
+	}
+	/* Directional Lights */
+
+	/* Spot Lights */
+	set_integer(instanced_model->program, "num_spot_lights", instanced_spot_light->num_models);
+	for(uint32_t di = 0; di < instanced_spot_light->num_models; ++di) {
+		char var_name[50];
+		make_glsl_string(var_name, di, "spot_lights", "position");
+		set_vector3(instanced_model->program, var_name, &instanced_spot_light->positions[di]);
+		make_glsl_string(var_name, di, "spot_lights", "direction");
+		set_vector3(instanced_model->program, var_name, &instanced_spot_light->directions[di]);
+	}
+	/* Spot Lights */
 
 	glBindVertexArray(instanced_model->vao);
 	glDrawArraysInstanced(GL_TRIANGLES, 0, instanced_model->num_vertices, instanced_model->num_models);

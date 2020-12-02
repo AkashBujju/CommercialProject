@@ -9,6 +9,10 @@ void load_instanced_dir_light(InstancedDirLight *light, GLuint program, const ch
 	light->program = program;
 	light->num_models = num_models;
 
+	if(num_models > MAX_LIGHTS) {
+		printf("WARNING: load_instanced_dir_light -> num_models(%u) > MAX_LIGHTS(%d)\n", num_models, MAX_LIGHTS);
+	}
+
 	FILE *file = fopen(model_filename, "r");
 	if(!file) {
 		printf("File %s not found\n", model_filename);
@@ -21,8 +25,8 @@ void load_instanced_dir_light(InstancedDirLight *light, GLuint program, const ch
 		/* Retriving number of floats */
 
 		/* @Note: Change this if normals and other info are added */
-		/* 3 for the co-ordinates */
-		light->num_vertices = num_floats / 3;
+		/* 3 for the co-ordinates, 3 for the normals */
+		light->num_vertices = num_floats / 6;
 
 		float *vertices = (float*)malloc(sizeof(float) * num_floats);
 		read_floats_from_file(model_filename, vertices);
@@ -46,7 +50,7 @@ void load_instanced_dir_light(InstancedDirLight *light, GLuint program, const ch
 		glBindVertexArray(light->vao);
 		glBindBuffer(GL_ARRAY_BUFFER, light->vbo);
 		glBufferData(GL_ARRAY_BUFFER, sizeof(vertices) * num_floats, vertices, GL_STATIC_DRAW);
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_TRUE, 3 * sizeof(float), (void*)0);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_TRUE, 6 * sizeof(float), (void*)0);
 		glEnableVertexAttribArray(0);
 
 		/* Instanced Model Data */
@@ -99,6 +103,17 @@ void scale_instanced_dir_light(InstancedDirLight *light, uint32_t model_index, f
 		light->scales[model_index].x *= x;
 		light->scales[model_index].y *= y;
 		light->scales[model_index].z *= z;
+	}
+}
+
+void set_direction_instanced_spot_light(InstancedSpotLight *light, uint32_t model_index, float x, float y, float z) {
+	if(model_index >= light->num_models) {
+		printf("WARNING: In set_direction_instanced_dir_light(): model_index(%u) >= num_models(%u)\n", model_index, light->num_models);
+	}
+	else {
+		light->directions[model_index].x = x;
+		light->directions[model_index].y = y;
+		light->directions[model_index].z = z;
 	}
 }
 
