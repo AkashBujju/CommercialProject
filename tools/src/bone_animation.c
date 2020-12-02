@@ -49,37 +49,37 @@ int main() {
 
 	/* Instanced Model */
 	InstancedModel im;
-	load_instanced_model(&im, instanced_program, combine_string(tmp_models_path, "person_try.model"), 2);
-	translate_instanced_model(&im, 0, -2, 0, 0);
-	translate_instanced_model(&im, 1, +2, 0, 0);
+	load_instanced_model(&im, instanced_program, combine_string(tmp_models_path, "person_try.model"), 3);
+	translate_instanced_model(&im, 0, -3, 0, 0);
+	translate_instanced_model(&im, 1, +0, 0, 0);
+	translate_instanced_model(&im, 1, +3, 0, 0);
 	set_material_instanced_model(&im, 0, "pearl");
-	set_material_instanced_model(&im, 1, "jade");
-
-	/* Lights */
-	Light lights[2];
-	load_light(&lights[0], light_program, combine_string(tmp_models_path, "light_cube.model"));
-	load_light(&lights[1], light_program, combine_string(tmp_models_path, "light_cube.model"));
-	translate_light(&lights[0], 5, 2, 3);
-	translate_light(&lights[1], -5, 2, 3);
-	scale_light(&lights[0], 0.1f, 0.1f, 0.1f);
-	scale_light(&lights[1], 0.1f, 0.1f, 0.1f);
-	/* Lights */
-
+	set_material_instanced_model(&im, 1, "emerald");
+	set_material_instanced_model(&im, 2, "jade");
 	/* Instanced Model */
 
+	/* Lights */
+	InstancedDirLight instanced_dir_light;
+	load_instanced_dir_light(&instanced_dir_light, light_program, combine_string(tmp_models_path, "light_cube.model"), 2);
+	translate_instanced_dir_light(&instanced_dir_light, 0, 5, 2, 3);
+	translate_instanced_dir_light(&instanced_dir_light, 1, -5, 2, 3);
+	scale_instanced_dir_light(&instanced_dir_light, 0, 0.1f, 0.1f, 0.1f);
+	scale_instanced_dir_light(&instanced_dir_light, 1, 0.1f, 0.1f, 0.1f);
+	/* Lights */
+
 	/* Bones */
-	Mesh mesh;
-	// add_vertex_to_mesh(&mesh, 0, 0, 0, -5.2f, 0, 0, 0, 1, 0);
-	// add_vertex_to_mesh(&mesh, 0, 1, 0, -3.2f, 0, 0, 1, 0.5f, 0.5f);
-	// add_vertex_to_mesh(&mesh, 1, 0, 0, -3.1f, 0, 0, 1, 0.5f, 0.5f);
-	// add_vertex_to_mesh(&mesh, 1, 1, 0, -1.1f, 0, 1, 2, 0.5f, 0.5f);
-	// add_vertex_to_mesh(&mesh, 2, 0, 0, -1.0f, 0, 1, 2, 0.5f, 0.5f);
-	// add_vertex_to_mesh(&mesh, 2, 1, 0, +1.0f, 0, 2, 3, 0.5f, 0.5f);
-	// add_vertex_to_mesh(&mesh, 3, 0, 0, +1.1f, 0, 2, 3, 0.5f, 0.5f);
-	// add_vertex_to_mesh(&mesh, 3, 1, 0, +3.1f, 0, 3, 4, 0.5f, 0.5f);
-	// add_vertex_to_mesh(&mesh, 4, 0, 0, +3.2f, 0, 3, 4, 0.5f, 0.5f);
-	// add_vertex_to_mesh(&mesh, 4, 1, 0, +5.2f, 0, 4, 0, 1, 0);
-	// compile_mesh(&mesh, bone_program, 6);
+	/*Mesh mesh;
+	add_vertex_to_mesh(&mesh, 0, 0, 0, -5.2f, 0, 0, 0, 1, 0);
+	add_vertex_to_mesh(&mesh, 0, 1, 0, -3.2f, 0, 0, 1, 0.5f, 0.5f);
+	add_vertex_to_mesh(&mesh, 1, 0, 0, -3.1f, 0, 0, 1, 0.5f, 0.5f);
+	add_vertex_to_mesh(&mesh, 1, 1, 0, -1.1f, 0, 1, 2, 0.5f, 0.5f);
+	add_vertex_to_mesh(&mesh, 2, 0, 0, -1.0f, 0, 1, 2, 0.5f, 0.5f);
+	add_vertex_to_mesh(&mesh, 2, 1, 0, +1.0f, 0, 2, 3, 0.5f, 0.5f);
+	add_vertex_to_mesh(&mesh, 3, 0, 0, +1.1f, 0, 2, 3, 0.5f, 0.5f);
+	add_vertex_to_mesh(&mesh, 3, 1, 0, +3.1f, 0, 3, 4, 0.5f, 0.5f);
+	add_vertex_to_mesh(&mesh, 4, 0, 0, +3.2f, 0, 3, 4, 0.5f, 0.5f);
+	add_vertex_to_mesh(&mesh, 4, 1, 0, +5.2f, 0, 4, 0, 1, 0);
+	compile_mesh(&mesh, bone_program, 6);*/
 	/* Bones */
 
 	while (!glfwWindowShouldClose(window)) {
@@ -103,8 +103,8 @@ int main() {
 		const float radius = 2.0f;
 		float light_x = sin(glfwGetTime()) * radius;
 		float light_z = cos(glfwGetTime()) * radius;
-		translate_light(&lights[0], light_x, 3, -light_z);
-		translate_light(&lights[1], -light_x, 3, light_z);
+		translate_instanced_dir_light(&instanced_dir_light, 0, light_x, 3, -light_z);
+		translate_instanced_dir_light(&instanced_dir_light, 1, -light_x, 3, light_z);
 		/* Moving the light */
 
 		/* Instanced Model */
@@ -117,29 +117,28 @@ int main() {
 		set_vector3(instanced_program, "dir_lights[0].ambient", &ambient_color);
 		set_vector3(instanced_program, "dir_lights[0].diffuse", &diffuse_color);
 		set_vector3(instanced_program, "dir_lights[0].specular", &specular_color);
-		set_vector3(instanced_program, "dir_lights[0].position", &lights[0].position);
+		set_vector3(instanced_program, "dir_lights[0].position", &instanced_dir_light.positions[0]);
 		set_vector3(instanced_program, "dir_lights[1].ambient", &ambient_color);
 		set_vector3(instanced_program, "dir_lights[1].diffuse", &diffuse_color);
 		set_vector3(instanced_program, "dir_lights[1].specular", &specular_color);
-		set_vector3(instanced_program, "dir_lights[1].position", &lights[1].position);
+		set_vector3(instanced_program, "dir_lights[1].position", &instanced_dir_light.positions[1]);
 		set_vector3(instanced_program, "viewPos", &position);
 		draw_instanced_model(&im);
 		/* Instanced Model */
 
 		/* Light */
-		draw_light(&lights[0]);
-		draw_light(&lights[1]);
+		draw_instanced_dir_light(&instanced_dir_light);
 		/* Light */
 
 		/* Bones */
-		// const float degree = 90;
-		// float d = sin(glfwGetTime()) * degree;
-		// rotate_bone_in_mesh(&mesh, 0, 1, 0, 0, d);
-		// rotate_bone_in_mesh(&mesh, 1, 0, 0, 1, d * 0.5f);
-		// rotate_bone_in_mesh(&mesh, 2, 0, 0, 1, d * 0.25f);
-		// set_matrix4(bone_program, "view", &view);
-		// set_matrix4(bone_program, "projection", &projection);
-		// draw_mesh(&mesh);
+		/*const float degree = 90;
+		float d = sin(glfwGetTime()) * degree;
+		rotate_bone_in_mesh(&mesh, 0, 1, 0, 0, d);
+		rotate_bone_in_mesh(&mesh, 1, 0, 0, 1, d * 0.5f);
+		rotate_bone_in_mesh(&mesh, 2, 0, 0, 1, d * 0.25f);
+		set_matrix4(bone_program, "view", &view);
+		set_matrix4(bone_program, "projection", &projection);
+		draw_mesh(&mesh);*/
 		/* Bones */
 
 		glfwSwapBuffers(window);

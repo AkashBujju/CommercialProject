@@ -27,8 +27,6 @@ typedef struct InstancedModel {
 	float depth[MAX_MODELS];
 	uint32_t num_models;
 	uint32_t num_vertices;
-
-	Vector3 tmp[10];
 } InstancedModel;
 
 void load_instanced_model(InstancedModel *instanced_model, GLuint program, const char* model_filename, uint32_t num_models);

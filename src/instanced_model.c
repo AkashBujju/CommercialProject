@@ -41,6 +41,7 @@ void load_instanced_model(InstancedModel *instanced_model, GLuint program, const
 		 	init_vector(&instanced_model->scales[i], 1, 1, 1);
 		 	init_vector(&instanced_model->positions[i], 0, 0, 0);
 			make_identity(&instanced_model->models[i]);
+			/* @Note: Change the width, height and depth to be the bounding of the model */
 		 	instanced_model->width[i] = 1;
 		 	instanced_model->height[i] = 1;
 		 	instanced_model->depth[i] = 1;
@@ -75,10 +76,9 @@ void load_instanced_model(InstancedModel *instanced_model, GLuint program, const
 
 		glGenBuffers(1, &instanced_model->instanceModelVBO);
     	glBindBuffer(GL_ARRAY_BUFFER, instanced_model->instanceModelVBO);
-    	glBufferData(GL_ARRAY_BUFFER, sizeof(Matrix4) * instanced_model->num_models, instanced_model->models, GL_DYNAMIC_DRAW);
+    	glBufferData(GL_ARRAY_BUFFER, sizeof(Matrix4) * instanced_model->num_models, instanced_model->models, GL_STATIC_DRAW);
     	glBindBuffer(GL_ARRAY_BUFFER, 0);
 		/* Instance VBOs */
-
 
 		/* Position and Normals */
 		glGenVertexArrays(1, &instanced_model->vao);
@@ -164,11 +164,6 @@ void translate_instanced_model(InstancedModel *instanced_model, uint32_t model_i
 		instanced_model->positions[model_index].x = x;
 		instanced_model->positions[model_index].y = y;
 		instanced_model->positions[model_index].z = z;
-
-    	glBindBuffer(GL_ARRAY_BUFFER, instanced_model->instanceModelVBO);
-		translate_matrix(&instanced_model->models[model_index], x, y, z);
-		glBufferSubData(GL_ARRAY_BUFFER, sizeof(Matrix4) * model_index, sizeof(Matrix4), &instanced_model->models[model_index]);
-    	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	}
 }
 
@@ -184,11 +179,6 @@ void scale_instanced_model(InstancedModel *instanced_model, uint32_t model_index
 		instanced_model->width[model_index] *= x;
 		instanced_model->height[model_index] *= y;
 		instanced_model->depth[model_index] *= z;
-
-    	glBindBuffer(GL_ARRAY_BUFFER, instanced_model->instanceModelVBO);
-		scale(&instanced_model->models[model_index], x, y, z);
-		glBufferSubData(GL_ARRAY_BUFFER, sizeof(Matrix4) * model_index, sizeof(Matrix4), &instanced_model->models[model_index]);
-    	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	}
 }
 
@@ -226,20 +216,34 @@ void rotate_instanced_model(InstancedModel *instanced_model, uint32_t model_inde
 		instanced_model->rotation_axes[model_index].x = x;
 		instanced_model->rotation_axes[model_index].y = y;
 		instanced_model->rotation_axes[model_index].z = z;
-
-    	glBindBuffer(GL_ARRAY_BUFFER, instanced_model->instanceModelVBO);
- 		Vector3 tmp;
- 		init_vector(&tmp, instanced_model->positions[model_index].x, instanced_model->positions[model_index].y, instanced_model->positions[model_index].z);
- 		translate_matrix(&instanced_model->models[model_index], 0, 0, 0);
- 		rotate(&instanced_model->models[model_index], &instanced_model->rotation_axes[model_index], instanced_model->angle_in_degree[model_index]);
- 		translate_matrix(&instanced_model->models[model_index], tmp.x, tmp.y, tmp.z);
-		glBufferSubData(GL_ARRAY_BUFFER, sizeof(Matrix4) * model_index, sizeof(Matrix4), &instanced_model->models[model_index]);
-    	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	}
 }
 
 void draw_instanced_model(InstancedModel *instanced_model) {
 	glUseProgram(instanced_model->program);
+
+	/* Updating in-struct Model Matrix */
+	for(uint32_t i = 0; i < instanced_model->num_models; ++i) {
+		make_identity(&instanced_model->models[i]);
+
+		translate_matrix(&instanced_model->models[i], instanced_model->positions[i].x, instanced_model->positions[i].y, instanced_model->positions[i].z);
+		scale(&instanced_model->models[i], instanced_model->width[i], instanced_model->height[i], instanced_model->depth[i]);
+ 		Vector3 tmp_position;
+ 		init_vector(&tmp_position, 
+				      instanced_model->positions[i].x, 
+						instanced_model->positions[i].y, 
+						instanced_model->positions[i].z);
+ 		translate_matrix(&instanced_model->models[i], 0, 0, 0);
+ 		rotate(&instanced_model->models[i], &instanced_model->rotation_axes[i], instanced_model->angle_in_degree[i]);
+ 		translate_matrix(&instanced_model->models[i], tmp_position.x, tmp_position.y, tmp_position.z);
+	}
+	/* Updating in-struct Model Matrix */
+
+	/* Updating ModelVBO */
+   glBindBuffer(GL_ARRAY_BUFFER, instanced_model->instanceModelVBO);
+	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(Matrix4) * instanced_model->num_models, instanced_model->models);
+   glBindBuffer(GL_ARRAY_BUFFER, 0);
+	/* Updating ModelVBO */
 
 	glBindVertexArray(instanced_model->vao);
 	glDrawArraysInstanced(GL_TRIANGLES, 0, instanced_model->num_vertices, instanced_model->num_models);
