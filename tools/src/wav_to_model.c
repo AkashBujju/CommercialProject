@@ -39,12 +39,11 @@ typedef struct Data {
 	uint32_t i_len;
 } Data;
 
-#define MAX_SEPERATE_MODELS 10
+#define MAX_SEPERATE_MODELS 50
 typedef struct Model {
-	Data data[MAX_SEPERATE_MODELS];
+	Data *data;
 	uint16_t count;
 } Model;
-#undef MAX_SEPERATE_MODELS
 
 void pack_into_structs(Model *model, SplitStrings *split_strs);
 void save_model(Model *model, const char*);
@@ -74,6 +73,7 @@ int main(int argc, char** argv) {
 			printf("-- Parsing file '%s' of size: %zu bytes\n", argv[1], filesize);
 
 			Model model;
+			model.data = (Data*)malloc(sizeof(Data) * MAX_SEPERATE_MODELS);
 			while(fgets(buffer, LINE_SIZE, file)) {
 #undef LINE_SIZE
 				/* Deleting the newline character */
@@ -97,6 +97,13 @@ int main(int argc, char** argv) {
 					pch = strtok(NULL, " ");
 				}
 				/* Split string and Copy */
+
+				if(model.count > MAX_SEPERATE_MODELS) {
+					printf("-- WARNING: wav_to_model -> model.count(%d) > MAX_SEPERATE_MODELS(%d)\n", model.count, MAX_SEPERATE_MODELS);
+					printf("-- QUIT wav_to_model file generation abruptly!!!!\n\n");
+					return -1;
+				}
+#undef MAX_SEPERATE_MODELS
 
 				split_strs.strings[split_strs.len].len = str_index;
 				split_strs.len += 1;
@@ -209,7 +216,6 @@ void save_model(Model *model, const char* filename) {
 
 	/* Calculating total number of floats */
 	uint32_t num_floats = 0;
-	printf("count: %d\n", model->count);
 	for(uint16_t di = 0; di < model->count; ++di) {
 		/* @Note: 3 for the co-ordinates and 3 for the normals := 6 */
 		for(uint16_t i = 0; i < model->data[di].i_len; ++i) {

@@ -49,29 +49,22 @@ int main() {
 
 	/* Instanced Model */
 	InstancedModel im;
-	load_instanced_model(&im, instanced_program, combine_string(tmp_models_path, "stand.model"), 3);
+	load_instanced_model(&im, instanced_program, combine_string(tmp_models_path, "person_try.model"), 2);
+	translate_instanced_model(&im, 0, -2, 0, 0);
+	translate_instanced_model(&im, 1, +2, 0, 0);
+	set_material_instanced_model(&im, 0, "pearl");
+	set_material_instanced_model(&im, 1, "jade");
 
-	Vector3 current_pos;
-	Vector3 current_color;
-	init_vector(&current_pos, -4, 0, 0);
-	init_vector(&current_color, 0.1f, 0.1f, 0.1f);
-	for(uint16_t i = 1; i <= 3; ++i) {
-		translate_instanced_model(&im, i - 1, current_pos.x, current_pos.y, current_pos.z);
-		// scale_instanced_model(&im, i - 1, 2.0f, 0.5f, 1.0f);
-		current_pos.x += 4;
-		current_color.x += 0.01f;
-		current_color.y += 0.04f;
-		current_color.z += 0.03f;
-	}
+	/* Lights */
+	Light lights[2];
+	load_light(&lights[0], light_program, combine_string(tmp_models_path, "light_cube.model"));
+	load_light(&lights[1], light_program, combine_string(tmp_models_path, "light_cube.model"));
+	translate_light(&lights[0], 5, 2, 3);
+	translate_light(&lights[1], -5, 2, 3);
+	scale_light(&lights[0], 0.1f, 0.1f, 0.1f);
+	scale_light(&lights[1], 0.1f, 0.1f, 0.1f);
+	/* Lights */
 
-	set_material_instanced_model(&im, 0, "bronze");
-	set_material_instanced_model(&im, 1, "gold");
-	set_material_instanced_model(&im, 2, "silver");
-
-	Light l1;
-	load_light(&l1, light_program, combine_string(tmp_models_path, "light_cube.model"));
-	translate_light(&l1, 0, 2, 3);
-	scale_light(&l1, 0.1f, 0.1f, 0.1f);
 	/* Instanced Model */
 
 	/* Bones */
@@ -107,10 +100,11 @@ int main() {
 		/* Set the view and projection */
 
 		/* Moving the light */
-		const float radius = 5.0f;
+		const float radius = 2.0f;
 		float light_x = sin(glfwGetTime()) * radius;
 		float light_z = cos(glfwGetTime()) * radius;
-		translate_light(&l1, light_x, 3, light_z);
+		translate_light(&lights[0], light_x, 3, -light_z);
+		translate_light(&lights[1], -light_x, 3, light_z);
 		/* Moving the light */
 
 		/* Instanced Model */
@@ -118,18 +112,23 @@ int main() {
 		Vector3 light_color, diffuse_color, specular_color, ambient_color;
 		init_vector(&light_color, 1, 1, 1);
 		init_vector(&specular_color, 1, 1, 1);
-		diffuse_color = scalar_mul(&light_color, 0.9f);
-		ambient_color = scalar_mul(&diffuse_color, 0.5f);
-		set_vector3(instanced_program, "light.ambient", &ambient_color);
-		set_vector3(instanced_program, "light.diffuse", &diffuse_color);
-		set_vector3(instanced_program, "light.specular", &specular_color);
-		set_vector3(instanced_program, "light.position", &l1.position);
+		diffuse_color = scalar_mul(&light_color, 0.6f);
+		ambient_color = scalar_mul(&diffuse_color, 0.3f);
+		set_vector3(instanced_program, "dir_lights[0].ambient", &ambient_color);
+		set_vector3(instanced_program, "dir_lights[0].diffuse", &diffuse_color);
+		set_vector3(instanced_program, "dir_lights[0].specular", &specular_color);
+		set_vector3(instanced_program, "dir_lights[0].position", &lights[0].position);
+		set_vector3(instanced_program, "dir_lights[1].ambient", &ambient_color);
+		set_vector3(instanced_program, "dir_lights[1].diffuse", &diffuse_color);
+		set_vector3(instanced_program, "dir_lights[1].specular", &specular_color);
+		set_vector3(instanced_program, "dir_lights[1].position", &lights[1].position);
 		set_vector3(instanced_program, "viewPos", &position);
 		draw_instanced_model(&im);
 		/* Instanced Model */
 
 		/* Light */
-		draw_light(&l1);
+		draw_light(&lights[0]);
+		draw_light(&lights[1]);
 		/* Light */
 
 		/* Bones */
