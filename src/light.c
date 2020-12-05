@@ -18,18 +18,24 @@ void load_instanced_dir_light(InstancedDirLight *light, GLuint program, const ch
 		printf("File %s not found\n", model_filename);
 	}
 	else {
-		/* Retriving number of floats */
+		/* Reading num_floats and sub_model_count from file */
 		uint32_t num_floats;
+		uint16_t sub_model_count;
+		char tmp[50];
+		fscanf(file, "%s", tmp); /* sub_model_count string */
+		fscanf(file, "%hu", &sub_model_count);
+		fscanf(file, "%s", tmp); /* num_floats string */
 		fscanf(file, "%u", &num_floats);
 		fclose(file);
-		/* Retriving number of floats */
+		/* Reading num_floats and sub_model_count from file */
+
+		float *vertices = (float*)malloc(sizeof(float) * num_floats);
+		Vector3 extreme_min, extreme_max;
+		get_model_data_from_file(model_filename, &extreme_min, &extreme_max, vertices);
 
 		/* @Note: Change this if normals and other info are added */
 		/* 3 for the co-ordinates, 3 for the normals */
 		light->num_vertices = num_floats / 6;
-
-		float *vertices = (float*)malloc(sizeof(float) * num_floats);
-		read_floats_from_file(model_filename, vertices);
 
 		/* @Note: Change the below to custom values later */
 		for(uint32_t i = 0; i < light->num_models; ++i) {
@@ -147,18 +153,24 @@ void load_instanced_spot_light(InstancedSpotLight *light, GLuint program, const 
 		printf("File %s not found\n", model_filename);
 	}
 	else {
-		/* Retriving number of floats */
+		/* Reading num_floats and sub_model_count from file */
 		uint32_t num_floats;
+		uint16_t sub_model_count;
+		char tmp[50];
+		fscanf(file, "%s", tmp); /* sub_model_count string */
+		fscanf(file, "%hu", &sub_model_count);
+		fscanf(file, "%s", tmp); /* num_floats string */
 		fscanf(file, "%u", &num_floats);
 		fclose(file);
-		/* Retriving number of floats */
+		/* Reading num_floats and sub_model_count from file */
+
+		float *vertices = (float*)malloc(sizeof(float) * num_floats);
+		Vector3 extreme_min, extreme_max;
+		get_model_data_from_file(model_filename, &extreme_min, &extreme_max, vertices);
 
 		/* @Note: Change this if normals and other info are added */
 		/* 3 for the co-ordinates */
 		light->num_vertices = num_floats / 3;
-
-		float *vertices = (float*)malloc(sizeof(float) * num_floats);
-		read_floats_from_file(model_filename, vertices);
 
 		/* @Note: Change the below to custom values later */
 		for(uint32_t i = 0; i < light->num_models; ++i) {

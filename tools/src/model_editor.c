@@ -6,7 +6,9 @@
 #include "../../src/shader.h"
 #include "../../src/utils.h"
 #include "../../src/math.h"
-#include "gui.h"
+#include "../../src/instanced_model.h"
+#include "model_loader_gui.h"
+#include "model_properties_gui.h"
 #include "meta_output.h"
 
 Vector3 front, position, up;
@@ -14,8 +16,9 @@ static uint8_t first_mouse = 1;
 static float yaw = -90.0f;
 static float pitch = -40.0f;
 static float last_x, last_y;
-static float camera_speed = 0.5f;
+static float camera_speed = 0.25f;
 static float zoom_speed = 1.0f;
+static uint8_t enable_cursor;
 const char* assets_path = "../../data/";
 const char* shaders_path = "../../shaders/";
 const char* tmp_models_path = "../data_out/";
@@ -31,17 +34,50 @@ void character_callback(GLFWwindow*, unsigned int);
 
 uint16_t window_width, window_height;
 Matrix4 view, projection, text_projection;
-GLuint rectangle_program, text_program;
-GLuint background_left_texture, box_texture, ht_box_texture, button_texture, ht_button_texture, cursor_texture;
+GLuint rectangle_program, text_program, instanced_program, dir_light_program, spot_light_program;
+GLuint background_left_texture, box_texture, ht_box_texture, button_texture, ht_button_texture, cursor_texture, model_properties_background_texture, close_button_texture, move_tag_texture;
 
-Font consolas, georgia_bold;
-EditorGUI editor_gui;
+InstancedModel ism_person_try;
+Font consolas, georgia_bold_12, georgia_bold_16, georgia_bold_20;
+ModelLoaderGUI model_loader_gui;
+ModelPropertiesGUI model_properties_gui;
 
 int main() {
 	GLFWwindow *window = init_gl_and_window("Model Editor", &window_width, &window_height, 1);
 	load();
+	enable_cursor = 1;
 
-	init_editor_gui(&editor_gui, &georgia_bold, 0.007f, 55);
+	load_instanced_model(&ism_person_try, instanced_program, "cube_1", combine_string(tmp_models_path, "cube_1.model"));
+	add_model(&ism_person_try, 0, 0, 0, "pearl");
+
+	InstancedDirLight instanced_dir_light;
+	load_instanced_dir_light(&instanced_dir_light, dir_light_program, combine_string(tmp_models_path, "cube_1.model"), 1);
+	translate_instanced_dir_light(&instanced_dir_light, 0, 0, 0, 3);
+	scale_instanced_dir_light(&instanced_dir_light, 0, 0.1f, 0.1f, 0.1f);
+
+	InstancedSpotLight instanced_spot_light;
+	load_instanced_spot_light(&instanced_spot_light, spot_light_program, combine_string(tmp_models_path, "cube_1.model"), 0);
+
+	/* Setting Lights Attributes once */
+	Vector3 light_color, diffuse_color, specular_color, ambient_color;
+	init_vector(&light_color, 1, 1, 1);
+	init_vector(&specular_color, 1, 1, 1);
+	diffuse_color = scalar_mul(&light_color, 0.6f);
+	ambient_color = scalar_mul(&diffuse_color, 0.3f);
+	glUseProgram(instanced_program);
+	set_vector3(instanced_program, "light_ambient", &ambient_color);
+	set_vector3(instanced_program, "light_diffuse", &diffuse_color);
+	set_vector3(instanced_program, "light_specular", &specular_color);
+	set_float(instanced_program, "light_cutOff", cos(to_radians(12.5f)));
+	set_float(instanced_program, "light_outerCutOff", cos(to_radians(17.5f)));
+	set_float(instanced_program, "light_constant", 1);
+	set_float(instanced_program, "light_linear", 0.09f);
+	set_float(instanced_program, "light_quadratic", 0.032f);
+	set_vector3(instanced_program, "viewPos", &position);
+	/* Setting Lights Attributes once */
+
+	init_model_loader_gui(&model_loader_gui, &georgia_bold_12, &georgia_bold_16, &georgia_bold_20, 0.007f, 55);
+	init_model_properties_gui(&model_properties_gui, &georgia_bold_12, &georgia_bold_16, &georgia_bold_20);
 
 	while (!glfwWindowShouldClose(window)) {
 		float current_time = glfwGetTime();
@@ -55,10 +91,29 @@ int main() {
 		view = look_at(&position, &pos_plus_front, &up);
 		set_matrix4(text_program, "projection", &text_projection);
 		set_matrix4(rectangle_program, "projection", &projection);
+		set_matrix4(instanced_program, "view", &view);
+		set_matrix4(instanced_program, "projection", &projection);
+		set_matrix4(dir_light_program, "view", &view);
+		set_matrix4(dir_light_program, "projection", &projection);
+		set_matrix4(spot_light_program, "view", &view);
+		set_matrix4(spot_light_program, "projection", &projection);
 		/* Set the view and projection */
 
-		handle_transition_gui(&editor_gui, 1, 0);
-		draw_editor_gui(&editor_gui, current_time);
+		draw_instanced_model(&ism_person_try, &instanced_dir_light, &instanced_spot_light);
+		draw_instanced_dir_light(&instanced_dir_light);
+		draw_instanced_spot_light(&instanced_spot_light);
+
+		handle_transition_gui(&model_loader_gui, 1, 0);
+		draw_model_loader_gui(&model_loader_gui, current_time);
+
+		/* @Note: Change this in the future */
+		double x_pos, y_pos;
+		glfwGetCursorPos(window, &x_pos, &y_pos);
+		Vector2 norm_mouse_pos;
+		norm_mouse_pos.x = f_normalize(x_pos, 0, window_width, -1, +1);
+		norm_mouse_pos.y = f_normalize(y_pos, 0, window_height, +1, -1);
+		translate_move_tag_and_update_properties_gui(&model_properties_gui, norm_mouse_pos.x, norm_mouse_pos.y);
+		draw_model_properties_gui(&model_properties_gui, current_time);
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
@@ -76,21 +131,30 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
 }
 
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
-    if(action == GLFW_PRESS)
-		handle_key_input_gui(&editor_gui, key);
-	 if(key == GLFW_KEY_TAB && action == GLFW_PRESS) {
-		 editor_gui.trn.activate = 1;
-	 }
+	if(action == GLFW_PRESS)
+		handle_key_input_gui(&model_loader_gui, key);
+	if(key == GLFW_KEY_TAB && action == GLFW_PRESS) {
+		model_loader_gui.trn.activate = 1;
+		enable_cursor = !enable_cursor;
+
+		if(enable_cursor)
+			glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+		else
+			glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	}
 }
 
 void character_callback(GLFWwindow* window, unsigned int codepoint) {
-	handle_textinput_gui(&editor_gui, (char)codepoint);
+	handle_textinput_gui(&model_loader_gui, (char)codepoint);
 }
 
 void process_input(GLFWwindow *window) {
 	if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
 		glfwSetWindowShouldClose(window, 1);
 	}
+	if(enable_cursor)
+		return;
+
 	if(glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
 		Vector3 res = cross(&front, &up);
 		normalize_vector(&res);
@@ -129,7 +193,7 @@ GLFWwindow* init_gl_and_window(const char *title, uint16_t *window_width, uint16
 #ifdef __APPLE__
 	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #endif
-	glfwWindowHint(GLFW_SAMPLES, 16); /* @Note: Is this even having any effect */
+	glfwWindowHint(GLFW_SAMPLES, 1); /* @Note: Is this even having any effect */
 
 	GLFWmonitor *monitor = glfwGetPrimaryMonitor();
 	const GLFWvidmode *video_mode = glfwGetVideoMode(monitor);
@@ -175,7 +239,35 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 		norm_mouse_pos.y = f_normalize(y_pos, 0, window_height, +1, -1);
 		/* Normalizing */
 
-		handle_mouse_click_gui(&editor_gui, &norm_mouse_pos, button);
+		Vector3 norm = normalize_to(x_pos, y_pos, window_width, window_height);
+		Vector ray = compute_mouse_ray_2(norm.x, norm.y, &view, &projection);
+
+		/* Test */
+		// scale_instanced_model_along(&ism_person_try, 0, &ray, 1, 0, 0);
+		/* Test */
+		
+		uint8_t hit = obb(&ism_person_try.models[0], &ism_person_try.positions[0], ism_person_try.bounding_boxes[0].width, ism_person_try.bounding_boxes[0].height, ism_person_try.bounding_boxes[0].depth, &ray);
+
+		if(hit) {
+			model_properties_gui.show = 1;
+			set_instanced_model_info_to_properties_gui(&model_properties_gui, &ism_person_try, 0);
+		}
+
+		handle_mouse_click_gui(&model_loader_gui, &norm_mouse_pos);
+		handle_mouse_click_properties_gui(&model_properties_gui, &norm_mouse_pos);
+		handle_mouse_movement_properties_gui(&model_properties_gui, &norm_mouse_pos);
+
+		if(model_properties_gui.close_button.clicked) {
+			model_properties_gui.show = 0;
+		}
+
+		/* @Note: Is this the we to handle this */
+		// if(model_loader_gui.model_load_button.clicked) {
+		// 	char* text = model_loader_gui.model_load_textbox.text.text;
+
+		// 	if(strcmp(text, "person_try") == 0)
+		// 		add_model(&ism_person_try, 0, 0, 0, "pearl");
+		// }
 	}
 }
 
@@ -190,6 +282,9 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
 	float yoffset = last_y - ypos;
 	last_x = xpos;
 	last_y = ypos;
+
+	if(enable_cursor)
+		return;
 
 	float sensitivity = 0.1f;
 	xoffset *= sensitivity;

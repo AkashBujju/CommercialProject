@@ -1,0 +1,93 @@
+#include "model_properties_gui.h"
+
+extern GLuint rectangle_program;
+extern GLuint text_program;
+extern GLuint model_properties_background_texture;
+extern GLuint button_texture;
+extern GLuint ht_button_texture;
+extern GLuint close_button_texture;
+extern GLuint move_tag_texture;
+
+void init_model_properties_gui(ModelPropertiesGUI *model_properties_gui, Font *small_font, Font *medium_font, Font *big_font) {
+	model_properties_gui->show = 0;
+
+	/* Move tag */
+	load_rectangle_2d(&model_properties_gui->move_tag, rectangle_program, move_tag_texture, 0.06f, 0.06f);
+	translate_rectangle_2d(&model_properties_gui->move_tag, 0, 0);
+	/* Move tag */
+
+	/* Background */
+	load_rectangle_2d(&model_properties_gui->background, rectangle_program, model_properties_background_texture, 0.5f, 0.7f);
+	translate_rectangle_2d(&model_properties_gui->background, model_properties_gui->move_tag.position.x + model_properties_gui->background.dimensions.x / 2.0f - model_properties_gui->move_tag.dimensions.x / 2.0f, model_properties_gui->move_tag.position.y - model_properties_gui->background.dimensions.y / 2.0f);
+	/* Background */
+
+	/* Close Button */
+	init_button(&model_properties_gui->close_button, medium_font, "X", rectangle_program, close_button_texture, ht_button_texture, 0.04f, 0.06f);
+	set_button_position(&model_properties_gui->close_button, model_properties_gui->background.position.x + (model_properties_gui->background.dimensions.x / 2.0f) * 0.95f - model_properties_gui->close_button.box.dimensions.x / 2.0f, model_properties_gui->background.position.y + (model_properties_gui->background.dimensions.y / 2.0f) * 0.95f - model_properties_gui->close_button.box.dimensions.y / 2.0f);
+	/* Close Button */
+
+	/* Model Name */
+	init_text(&model_properties_gui->model_name_text, medium_font, "name: na", 0, 0, 1, 1, 0);
+	set_text_position(&model_properties_gui->model_name_text, model_properties_gui->background.position.x - (model_properties_gui->model_name_text.normalized_dims.x / 2.0f), model_properties_gui->background.position.y + (model_properties_gui->background.dimensions.y / 2.0f) * 0.85f);
+	/* Model Name */
+
+	/* Model Index */
+	init_text(&model_properties_gui->model_index_text, medium_font, "index: na", 0, 0, 1, 1, 0);
+	set_text_position(&model_properties_gui->model_index_text, model_properties_gui->background.position.x - (model_properties_gui->model_index_text.normalized_dims.x / 2.0f), model_properties_gui->background.position.y + (model_properties_gui->background.dimensions.y / 2.0f) * 0.7f);
+	/* Model Index */
+}
+
+void set_instanced_model_info_to_properties_gui(ModelPropertiesGUI *model_properties_gui, InstancedModel *instanced_model, uint32_t model_index) {
+	/* Model Name */
+	char model_name[50];
+	strcpy(model_name, "name: ");
+	strcat(model_name, instanced_model->model_name);
+	strcpy(model_properties_gui->model_name_text.text, model_name);
+	update_text(&model_properties_gui->model_name_text);
+	set_text_position(&model_properties_gui->model_name_text, model_properties_gui->background.position.x - (model_properties_gui->model_name_text.normalized_dims.x / 2.0f), model_properties_gui->background.position.y + (model_properties_gui->background.dimensions.y / 2.0f) * 0.85f);
+	/* Model Name */
+
+	/* Model Index */
+	char mi[50], model_index_str[10];
+	sprintf(model_index_str, "%d", model_index);
+	strcpy(mi, "index: ");
+	strcat(mi, model_index_str);
+	strcpy(model_properties_gui->model_index_text.text, mi);
+	update_text(&model_properties_gui->model_index_text);
+	set_text_position(&model_properties_gui->model_index_text, model_properties_gui->background.position.x - (model_properties_gui->model_index_text.normalized_dims.x / 2.0f), model_properties_gui->background.position.y + (model_properties_gui->background.dimensions.y / 2.0f) * 0.7f);
+	/* Model Index */
+}
+
+void translate_move_tag_and_update_properties_gui(ModelPropertiesGUI *model_properties_gui, float norm_x, float norm_y) {
+	if(model_properties_gui->moving) {
+		translate_rectangle_2d(&model_properties_gui->move_tag, norm_x, norm_y);
+		translate_rectangle_2d(&model_properties_gui->background, model_properties_gui->move_tag.position.x + model_properties_gui->background.dimensions.x / 2.0f - model_properties_gui->move_tag.dimensions.x / 2.0f, model_properties_gui->move_tag.position.y - model_properties_gui->background.dimensions.y / 2.0f);
+		set_button_position(&model_properties_gui->close_button, model_properties_gui->background.position.x + (model_properties_gui->background.dimensions.x / 2.0f) * 0.95f - model_properties_gui->close_button.box.dimensions.x / 2.0f, model_properties_gui->background.position.y + (model_properties_gui->background.dimensions.y / 2.0f) * 0.95f - model_properties_gui->close_button.box.dimensions.y / 2.0f);
+		set_text_position(&model_properties_gui->model_name_text, model_properties_gui->background.position.x - (model_properties_gui->model_name_text.normalized_dims.x / 2.0f), model_properties_gui->background.position.y + (model_properties_gui->background.dimensions.y / 2.0f) * 0.85f);
+		set_text_position(&model_properties_gui->model_index_text, model_properties_gui->background.position.x - (model_properties_gui->model_index_text.normalized_dims.x / 2.0f), model_properties_gui->background.position.y + (model_properties_gui->background.dimensions.y / 2.0f) * 0.7f);
+	}
+}
+
+void handle_mouse_movement_properties_gui(ModelPropertiesGUI *model_properties_gui, Vector2 *mouse_norm_pos) {
+	if(model_properties_gui->show) {
+		uint8_t clicked = in_rect(mouse_norm_pos, &model_properties_gui->move_tag.position, &model_properties_gui->move_tag.dimensions);
+		if(clicked)
+			model_properties_gui->moving = !model_properties_gui->moving;
+	}
+}
+
+void handle_mouse_click_properties_gui(ModelPropertiesGUI *model_properties_gui, Vector2 *mouse_norm_pos) {
+	if(model_properties_gui->show) {
+		button_clicked(&model_properties_gui->close_button, mouse_norm_pos);
+	}
+}
+
+void draw_model_properties_gui(ModelPropertiesGUI *model_properties_gui, float current_time) {
+	if(model_properties_gui->show) {
+		show_text(&model_properties_gui->model_name_text, text_program);
+		show_text(&model_properties_gui->model_index_text, text_program);
+		draw_button(&model_properties_gui->close_button, text_program, current_time);
+		draw_rectangle_2d(&model_properties_gui->background);
+		draw_rectangle_2d(&model_properties_gui->move_tag);
+	}
+}

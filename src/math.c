@@ -497,6 +497,147 @@ Vector compute_mouse_ray(float norm_x, float norm_y, Matrix4 *view, Matrix4 *pro
 	return res;
 }
 
+/* @Note: For now we move only along one axes at a time */
+uint8_t get_position_along_axis(Vector3 *position, Vector3 *result, Vector *ray, uint8_t along_x, uint8_t along_y, uint8_t along_z) {
+	Vector3 plane_normal = { 0, 0, 0 };
+	if(along_x || along_y)
+		plane_normal.z = 1;
+	else if(along_z)
+		plane_normal.y = 1;
+
+	Vector3 ray_end;
+	ray_end = scalar_mul(&ray->direction, 200);
+	ray_end = add(&ray->point, &ray_end);
+	Vector3 ray_delta = sub(&ray_end, &ray->point);
+	Vector3 ray_to_plane_delta = sub(position, &ray->point);
+
+	float wp = dot(&ray_to_plane_delta, &plane_normal);
+	float vp = dot(&ray_delta, &plane_normal);
+	float k = wp / vp;
+	if(k < 0 || k > 1)
+		return 0;
+
+	*result = scalar_mul(&ray_delta, k);
+	*result = add(&ray->point, result);
+
+	return 1;
+}
+
+uint8_t obb(Matrix4 *model, Vector3 *position, float width, float height, float depth, Vector *ray) {
+	Vector3 right, up, forward;
+
+	float *matrix = model->matrix;
+	init_vector(&right, matrix[0], matrix[1], matrix[2]);
+	init_vector(&up, matrix[4], matrix[5], matrix[6]);
+	init_vector(&forward, matrix[8], matrix[9], matrix[10]);
+
+	normalize_vector(&right);
+	normalize_vector(&up);
+	normalize_vector(&forward);
+
+	Vector3 bb_ray_delta = sub(position, &ray->point);
+	Vector3 min_bound, max_bound;
+	float width_by_2 = width / 2;
+	float height_by_2 = height / 2;
+	float depth_by_2 = depth / 2;
+
+	init_vector(&min_bound, -width_by_2, -height_by_2, -depth_by_2);
+	init_vector(&max_bound, width_by_2, height_by_2, depth_by_2);
+
+	float t_min = 0, t_max = 1000000;
+	// x-axis
+	{
+		float nom_len = dot(&right, &bb_ray_delta);
+		float denom_len = dot(&ray->direction, &right);
+		float min, max;
+
+		if(fabs(denom_len) > 0.00001f) {
+			min = (nom_len + min_bound.x) / denom_len;
+			max = (nom_len + max_bound.x) / denom_len;
+
+			if(min < max) {
+				t_min = min;
+				t_max = max;
+			}
+			else {
+				t_min = max;
+				t_max = min;
+			}
+
+			if(t_max < t_min) {
+				return 0;
+			}
+		}
+		else {
+			if((-nom_len + min_bound.x) > 0 || (-nom_len + max_bound.x) < 0) {
+				return 0;
+			}
+		}
+	}
+
+	// y-axis
+	{
+		float nom_len = dot(&up, &bb_ray_delta);
+		float denom_len = dot(&ray->direction, &up);
+		float min, max;
+
+		if(fabs(denom_len) > 0.00001f) {
+			min = (nom_len + min_bound.y) / denom_len;
+			max = (nom_len + max_bound.y) / denom_len;
+
+			if(min < max) {
+				t_min = f_max(t_min, min);
+				t_max = f_min(t_max, max);
+			}
+			else {
+				t_min = f_max(t_min, max);
+				t_max = f_min(t_max, min);
+			}
+
+			if(t_max < t_min) {
+				return 0;
+			}
+		}
+		else {
+			if((-nom_len + min_bound.y) > 0 || (-nom_len + max_bound.y) < 0) {
+				return 0;
+			}
+		}
+	}
+
+	// z-axis
+	{
+		float nom_len = dot(&forward, &bb_ray_delta);
+		float denom_len = dot(&ray->direction, &forward);
+		float min, max;
+
+		if(fabs(denom_len) > 0.00001f) {
+			min = (nom_len + min_bound.z) / denom_len;
+			max = (nom_len + max_bound.z) / denom_len;
+
+			if(min < max) {
+				t_min = f_max(t_min, min);
+				t_max = f_min(t_max, max);
+			}
+			else {
+				t_min = f_max(t_min, max);
+				t_max = f_min(t_max, min);
+			}
+
+			if(t_max < t_min) {
+				return 0;
+			}
+		}
+		else {
+			if((-nom_len + min_bound.z) > 0 || (-nom_len + max_bound.z) < 0) {
+				return 0;
+			}
+		}
+	}
+
+	return 1;
+}
+
 int in_plane_point(Box *box, Vector3 *res, Vector3 *ray_start, Vector3* ray_end) {
 	Vector3 vec_1 = sub(&box->top_right, &box->top_left);
 	Vector3 vec_2 = sub(&box->bottom_left, &box->top_left);

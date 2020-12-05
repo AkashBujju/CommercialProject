@@ -1,15 +1,23 @@
 SHADER rectangle_program rect_v_shader.shader texture_f_shader.shader
 SHADER text_program v_text.shader f_text.shader
+SHADER instanced_program instanced_v_shader.shader instanced_f_shader.shader
+SHADER dir_light_program v_dir_light.shader f_dir_light.shader
+SHADER spot_light_program v_spot_light.shader f_spot_light.shader
 
 TEXTURE background_left_texture png/test_1.png
+TEXTURE model_properties_background_texture png/model_properties.png
 TEXTURE cursor_texture png/cursor.png
 TEXTURE box_texture png/text_box.png
 TEXTURE ht_box_texture png/text_box_ht.png
 TEXTURE button_texture png/button_box.png
 TEXTURE ht_button_texture png/button_box_ht.png
+TEXTURE close_button_texture png/close_button.png
+TEXTURE move_tag_texture png/move_tag.png
 
-FONT consolas fonts/consolas.ttf
-FONT georgia_bold fonts/georgia_bold.ttf
+FONT consolas 14 fonts/consolas.ttf
+FONT georgia_bold_12 12 fonts/georgia_bold.ttf
+FONT georgia_bold_16 16 fonts/georgia_bold.ttf
+FONT georgia_bold_20 20 fonts/georgia_bold.ttf
 
 CAMERA_FRONT 0 0 -1
 CAMERA_POSITION 0 0 10

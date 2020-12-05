@@ -21,6 +21,7 @@ typedef struct TextureInfos {
 typedef struct FontInfos {
 	uint32_t count;
 	char variable_name[MAX_COUNT][50];
+	uint16_t font_size[MAX_COUNT];
 	char filename[MAX_COUNT][50];
 } FontInfos;
 
@@ -103,7 +104,7 @@ void write_meta(MetaInfo *meta_info) {
 	for(uint32_t i = 0; i < meta_info->font_infos.count; ++i) {
 		fprintf(file, "\tFT_Library ft_%d;\n", i + 1); 
 		fprintf(file, "\tinit_freetype(&ft_%d);\n", i + 1); 
-		fprintf(file, "\tinit_font(&%s, combine_string(assets_path, \"%s\"), &ft_%d);\n\n", meta_info->font_infos.variable_name[i], meta_info->font_infos.filename[i], i + 1);
+		fprintf(file, "\tinit_font(&%s, %hu, combine_string(assets_path, \"%s\"), &ft_%d);\n\n", meta_info->font_infos.variable_name[i], meta_info->font_infos.font_size[i], meta_info->font_infos.filename[i], i + 1);
 	}
 
 	// CAMERA FRONT & POSITION
@@ -149,6 +150,7 @@ void read_data(MetaInfo *meta_info) {
 			else if(strcmp(variable_type, "FONT") == 0) {
 				uint32_t index = meta_info->font_infos.count;
 				fscanf(file, "%s", meta_info->font_infos.variable_name[index]);
+				fscanf(file, "%hu", &meta_info->font_infos.font_size[index]);
 				fscanf(file, "%s", meta_info->font_infos.filename[index]);
 
 				meta_info->font_infos.count += 1;

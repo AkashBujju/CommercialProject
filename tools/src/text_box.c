@@ -49,6 +49,7 @@ void init_textbox(TextBox *text_box, Font *font, char* string, GLuint rectangle_
 	load_rectangle_2d(&text_box->cursor, rectangle_2d_program, cursor_texture_id, text_box->box.dimensions.x * 0.02f, text_box->box.dimensions.y * 0.5f);
 
 	init_text(&text_box->text, font, string, 0, 0, 1, 1, 0);
+	
 	set_text_position(&text_box->text, text_box->box.position.x - (text_box->box.dimensions.x / 2.0f) * 0.85f, text_box->box.position.y - text_box->text.normalized_dims.y / 2.0f);
 
 	if(strlen(string) >= 1)
@@ -78,8 +79,12 @@ void handle_cursor_movement(TextBox *text_box, int key) {
 void handle_text_input(TextBox *text_box, char c) {
 	if(text_box->is_active) {
 		insert_char_into_string(text_box->text.text, c, text_box->cursor_index + 1);
+		update_text(&text_box->text);
 		text_box->cursor_index += 1;
 		set_cursor_pos(text_box);
+
+		if(text_box->text.length == 1)
+			set_text_position(&text_box->text, text_box->box.position.x - (text_box->box.dimensions.x / 2.0f) * 0.85f, text_box->box.position.y - text_box->text.normalized_dims.y / 2.0f);
 	}
 }
 

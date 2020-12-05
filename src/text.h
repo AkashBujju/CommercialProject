@@ -21,7 +21,7 @@ struct Font {
 typedef struct Font Font;
 
 void init_freetype(FT_Library *ft);
-void init_font(Font *font, const char* filepath, FT_Library *ft);
+void init_font(Font *font, uint16_t font_size, const char* filepath, FT_Library *ft);
 Vector2 get_char_offset(Font *font, float scale, const char* text, int16_t index);
 float get_text_width(Font *font, float scale, const char* text);
 float get_text_height(Font *font, float scale, const char* text);

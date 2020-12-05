@@ -9,14 +9,14 @@ void init_freetype(FT_Library *ft) {
 		printf("Could not init FreeType library\n");
 }
 
-void init_font(Font *font, const char* filepath, FT_Library *ft) {
+void init_font(Font *font, uint16_t font_size, const char* filepath, FT_Library *ft) {
 	FT_Face face;
 	if(FT_New_Face(*ft, filepath, 0, &face)) {
 		printf("Could not load font %s\n", filepath);
 		return;
 	}
 
-	FT_Set_Pixel_Sizes(face, 0, 16);
+	FT_Set_Pixel_Sizes(face, 0, font_size);
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 	for(unsigned int i = 0; i < 128; ++i) {
 		if(FT_Load_Char(face, i, FT_LOAD_RENDER)) {
@@ -97,6 +97,9 @@ float get_text_height(Font *font, float scale, const char* text) {
 	int text_length = -1;
 	while(text[++text_length] != '\0'){}
 
+	if(text_length == 0)
+		return 0;
+
 	float total_height = 0;
 	for(int i = 0; i < text_length; ++i) {
 		int ascii = (int)text[i];
@@ -111,6 +114,9 @@ float get_text_height(Font *font, float scale, const char* text) {
 float get_text_width(Font *font, float scale, const char* text) {
 	int text_length = -1;
 	while(text[++text_length] != '\0'){}
+
+	if(text_length == 0)
+		return 0;
 
 	float width = 0;
 	for(int i = 0; i < text_length; ++i) {

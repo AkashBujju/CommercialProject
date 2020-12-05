@@ -13,6 +13,7 @@ typedef struct Material {
 } Material;
 
 int read_file(const char* filename, char *buffer);
+void get_model_data_from_file(const char* filename, Vector3 *extreme_mins, Vector3 *extreme_maxs, float *vertices_buffer);
 char* combine_string(const char* str_1, const char* str_2);
 void insert_char_into_string(char* src, char ch, uint16_t index);
 void read_floats_from_file(const char* filename, float *buffer);

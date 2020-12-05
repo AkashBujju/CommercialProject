@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "math.h"
 
 int read_file(const char* filename, char *buffer) {
 	FILE *file = NULL;
@@ -20,6 +21,36 @@ int read_file(const char* filename, char *buffer) {
 	
 	fclose(file);
 	return 0;
+}
+
+void get_model_data_from_file(const char* filename, Vector3 *extreme_mins, Vector3 *extreme_maxs, float *vertices_buffer) {
+	FILE *file = NULL;
+	file = fopen(filename, "r");
+	if(file == NULL) {
+		printf("ERROR get_model_data_from_file(): Could not open file %s\n", filename);
+	}
+
+	char num_sub_models_str[25];
+	fscanf(file, "%s", num_sub_models_str);
+	uint16_t num_sub_models;
+	fscanf(file, "%hu", &num_sub_models);
+
+	char num_vertex_floats_str[25];
+	fscanf(file, "%s", num_vertex_floats_str);
+	uint32_t num_floats_in_file;
+	fscanf(file, "%u", &num_floats_in_file);
+
+	char extremes_str[25];
+	fscanf(file, "%s", extremes_str);
+	fscanf(file, "%f", &extreme_mins->x);
+	fscanf(file, "%f", &extreme_maxs->x);
+	fscanf(file, "%f", &extreme_mins->y);
+	fscanf(file, "%f", &extreme_maxs->y);
+	fscanf(file, "%f", &extreme_mins->z);
+	fscanf(file, "%f", &extreme_maxs->z);
+
+	for(int i = 0; i < num_floats_in_file; ++i)
+		fscanf(file, "%f", &vertices_buffer[i]);
 }
 
 void read_floats_from_file(const char* filename, float *buffer) {

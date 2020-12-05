@@ -5,9 +5,8 @@
 #include <math.h>
 #include "../../src/shader.h"
 #include "../../src/utils.h"
-#include "../../src/math.h" /* For testing the model */
+#include "../../src/math.h"
 #include "../../src/instanced_model.h"
-#include "../../src/light.h"
 #include "tmp_bone.h"
 
 void framebuffer_size_callback(GLFWwindow*, int, int);
@@ -50,11 +49,11 @@ int main() {
 
 	/* Lights */
 	InstancedDirLight instanced_dir_light;
-	load_instanced_dir_light(&instanced_dir_light, dir_light_program, combine_string(tmp_models_path, "ico_sphere.model"), 0);
-	// translate_instanced_dir_light(&instanced_dir_light, 0, 5, 2, 3);
-	// translate_instanced_dir_light(&instanced_dir_light, 1, -5, 2, 3);
-	// scale_instanced_dir_light(&instanced_dir_light, 0, 0.1f, 0.1f, 0.1f);
-	// scale_instanced_dir_light(&instanced_dir_light, 1, 0.1f, 0.1f, 0.1f);
+	load_instanced_dir_light(&instanced_dir_light, dir_light_program, combine_string(tmp_models_path, "ico_sphere.model"), 2);
+	translate_instanced_dir_light(&instanced_dir_light, 0, 5, 2, 3);
+	translate_instanced_dir_light(&instanced_dir_light, 1, -5, 2, 3);
+	scale_instanced_dir_light(&instanced_dir_light, 0, 0.1f, 0.1f, 0.1f);
+	scale_instanced_dir_light(&instanced_dir_light, 1, 0.1f, 0.1f, 0.1f);
 
 	InstancedSpotLight instanced_spot_light;
 	load_instanced_spot_light(&instanced_spot_light, spot_light_program, combine_string(tmp_models_path, "light_cube.model"), 1);
@@ -65,13 +64,10 @@ int main() {
 
 	/* Instanced Model */
 	InstancedModel im;
-	load_instanced_model(&im, instanced_program, combine_string(tmp_models_path, "person_try.model"), 3);
-	translate_instanced_model(&im, 0, -3, 0, 0);
-	translate_instanced_model(&im, 1, +0, 0, 0);
-	translate_instanced_model(&im, 1, +3, 0, 0);
-	set_material_instanced_model(&im, 0, "pearl");
-	set_material_instanced_model(&im, 1, "emerald");
-	set_material_instanced_model(&im, 2, "jade");
+	load_instanced_model(&im, instanced_program, combine_string(tmp_models_path, "person_try.model"));
+	add_model(&im, -3, 0, 0, "pearl");
+	add_model(&im, +0, 0, 0, "emerald");
+	add_model(&im, +3, 0, 0, "jade");
 	/* Instanced Model */
 
 	/* Setting Lights Attributes once */
@@ -111,7 +107,7 @@ int main() {
 	while (!glfwWindowShouldClose(window)) {
 		process_input(window);
 
-		glClearColor(0.05f, 0.05f, 0.05f, 1.0f);
+		glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		/* Set the view and projection */
@@ -132,6 +128,8 @@ int main() {
 		float light_x = sin(glfwGetTime()) * radius;
 		float light_z = cos(glfwGetTime()) * radius;
 		translate_instanced_spot_light(&instanced_spot_light, 0, light_x, 0, -light_z);
+		translate_instanced_dir_light(&instanced_dir_light, 0, -light_x, 3, -light_z);
+		translate_instanced_dir_light(&instanced_dir_light, 1, light_x, 3, light_z);
 		/* Moving the light */
 
 		/* Instanced Model */

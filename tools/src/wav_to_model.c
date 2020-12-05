@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <float.h>
 
 #define BUFFER_SIZE 32768
 #define ARRAY_SIZE 8192
@@ -43,6 +44,9 @@ typedef struct Data {
 typedef struct Model {
 	Data *data;
 	uint16_t count;
+	float min_x, max_x;
+	float min_y, max_y;
+	float min_z, max_z;
 } Model;
 
 void pack_into_structs(Model *model, SplitStrings *split_strs);
@@ -74,6 +78,7 @@ int main(int argc, char** argv) {
 
 			Model model;
 			model.data = (Data*)malloc(sizeof(Data) * MAX_SEPERATE_MODELS);
+			model.count = 0;
 			while(fgets(buffer, LINE_SIZE, file)) {
 #undef LINE_SIZE
 				/* Deleting the newline character */
@@ -87,8 +92,9 @@ int main(int argc, char** argv) {
 				char* pch = strtok(buffer, " ");
 
 				/* Checking for new set of vertices */
-				if(strcmp(pch, "start") == 0)
+				if(strcmp(pch, "start") == 0) {
 					model.count += 1;
+				}
 				/* Checking for new set of vertices */
 
 				while(pch != NULL) {
@@ -99,7 +105,7 @@ int main(int argc, char** argv) {
 				/* Split string and Copy */
 
 				if(model.count > MAX_SEPERATE_MODELS) {
-					printf("-- WARNING: wav_to_model -> model.count(%d) > MAX_SEPERATE_MODELS(%d)\n", model.count, MAX_SEPERATE_MODELS);
+					printf("-- WARNING: wav_to_model -> model.count(%hu) > MAX_SEPERATE_MODELS(%d)\n", model.count, MAX_SEPERATE_MODELS);
 					printf("-- QUIT wav_to_model file generation abruptly!!!!\n\n");
 					return -1;
 				}
@@ -139,6 +145,13 @@ int main(int argc, char** argv) {
 void pack_into_structs(Model *model, SplitStrings *split_strs) {
 	int16_t di = -1;
 
+	model->min_x = +FLT_MAX;
+	model->max_x = -FLT_MAX;
+	model->min_y = +FLT_MAX;
+	model->max_y = -FLT_MAX;
+	model->min_z = +FLT_MAX;
+	model->max_z = -FLT_MAX;
+
 	for(uint32_t i = 0; i < split_strs->len; ++i) {
 		char* str = split_strs->strings[i].strings[0];
 		if(strcmp(str, "start") == 0) {
@@ -155,6 +168,13 @@ void pack_into_structs(Model *model, SplitStrings *split_strs) {
 			model->data[di].vertices[model->data[di].v_len].b = f2;
 			model->data[di].vertices[model->data[di].v_len].c = f3;
 			model->data[di].v_len += 1;
+
+			if(f1 < model->min_x) model->min_x = f1;
+			if(f1 > model->max_x) model->max_x = f1;
+			if(f2 < model->min_y) model->min_y = f2;
+			if(f2 > model->max_y) model->max_y = f2;
+			if(f3 < model->min_z) model->min_z = f3;
+			if(f3 > model->max_z) model->max_z = f3;
 		}
 		else if(strcmp(str, "vn") == 0) {
 			float f1 = strtof(split_strs->strings[i].strings[1], NULL);
@@ -227,7 +247,13 @@ void save_model(Model *model, const char* filename) {
 	}
 	/* Calculating total number of floats */
 
-	fprintf(file, "%u", num_floats);
+	fprintf(file, "num_sub_models %u", model->count);
+	fprintf(file, "\nnum_vertex_floats %u", num_floats);
+
+	/* Printing extremes */
+	fprintf(file, "\n%s", "extremes");
+	fprintf(file, " %+.3f %+.3f %+.3f %+.3f %+.3f %+.3f", model->min_x, model->max_x, model->min_y, model->max_y, model->min_z, model->max_z);
+	/* Printing extremes */
 
 	for(uint16_t di = 0; di < model->count; ++di) {
 		for(uint32_t i = 0; i < model->data[di].i_len; ++i) {
