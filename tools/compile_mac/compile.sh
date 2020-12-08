@@ -6,7 +6,7 @@ if [ $1 == "model_editor" ]; then
 	./data_load.out
 	cd ../compile_mac
 
-	src_files+="../src/meta_output.c ../src/model_loader_gui.c ../src/model_properties_gui.c"
+	src_files+="../src/meta_output.c ../src/model_loader_gui.c ../src/model_properties_gui.c ../src/helper_models.c"
 	echo Compiling extra $src_files
 fi
 

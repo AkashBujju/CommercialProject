@@ -12,7 +12,8 @@ typedef struct ModelPropertiesGUI {
 	Rectangle2D move_tag;
 	Text model_name_text;
 	Text model_index_text;
-
+	Text model_location_indicator_text;
+	Text model_location_text;
 	Button close_button;
 
 	uint8_t show;

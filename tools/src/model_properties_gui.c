@@ -35,6 +35,32 @@ void init_model_properties_gui(ModelPropertiesGUI *model_properties_gui, Font *s
 	init_text(&model_properties_gui->model_index_text, medium_font, "index: na", 0, 0, 1, 1, 0);
 	set_text_position(&model_properties_gui->model_index_text, model_properties_gui->background.position.x - (model_properties_gui->model_index_text.normalized_dims.x / 2.0f), model_properties_gui->background.position.y + (model_properties_gui->background.dimensions.y / 2.0f) * 0.7f);
 	/* Model Index */
+
+	/* Model location indicator */
+	init_text(&model_properties_gui->model_location_indicator_text, small_font, "location", 0, 0, 1, 1, 0);
+	set_text_position(&model_properties_gui->model_location_indicator_text, model_properties_gui->background.position.x - (model_properties_gui->background.dimensions.x / 2.0f) * 0.9f, model_properties_gui->background.position.y + (model_properties_gui->background.dimensions.y / 2.0f) * 0.45f);
+	/* Model location indicator */
+
+	/* Model location */
+	init_text(&model_properties_gui->model_location_text, medium_font, "na", 0, 0, 1, 1, 0);
+	set_text_position(&model_properties_gui->model_location_text, model_properties_gui->background.position.x - (model_properties_gui->background.dimensions.x / 2.0f) * 0.9f, model_properties_gui->background.position.y + (model_properties_gui->background.dimensions.y / 2.0f) * 0.30f);
+	/* Model location */
+}
+
+static void update_model_properties_location_text(ModelPropertiesGUI *model_properties_gui, float norm_x, float norm_y, float norm_z) {
+	char pos[50], tmp[10];
+	sprintf(tmp, "%+.3f", norm_x);
+	strcpy(pos, tmp);
+	strcat(pos, " ");
+	sprintf(tmp, "%+.3f", norm_y);
+	strcat(pos, tmp);
+	strcat(pos, " ");
+	sprintf(tmp, "%+.3f", norm_z);
+	strcat(pos, tmp);
+	strcat(pos, " ");
+
+	strcpy(model_properties_gui->model_location_text.text, pos);
+	update_text(&model_properties_gui->model_location_text);
 }
 
 void set_instanced_model_info_to_properties_gui(ModelPropertiesGUI *model_properties_gui, InstancedModel *instanced_model, uint32_t model_index) {
@@ -56,6 +82,11 @@ void set_instanced_model_info_to_properties_gui(ModelPropertiesGUI *model_proper
 	update_text(&model_properties_gui->model_index_text);
 	set_text_position(&model_properties_gui->model_index_text, model_properties_gui->background.position.x - (model_properties_gui->model_index_text.normalized_dims.x / 2.0f), model_properties_gui->background.position.y + (model_properties_gui->background.dimensions.y / 2.0f) * 0.7f);
 	/* Model Index */
+
+	/* Model location */
+	update_model_properties_location_text(model_properties_gui, instanced_model->positions[model_index].x, instanced_model->positions[model_index].y, instanced_model->positions[model_index].z);
+	/* Model location */
+
 }
 
 void translate_move_tag_and_update_properties_gui(ModelPropertiesGUI *model_properties_gui, float norm_x, float norm_y) {
@@ -65,6 +96,8 @@ void translate_move_tag_and_update_properties_gui(ModelPropertiesGUI *model_prop
 		set_button_position(&model_properties_gui->close_button, model_properties_gui->background.position.x + (model_properties_gui->background.dimensions.x / 2.0f) * 0.95f - model_properties_gui->close_button.box.dimensions.x / 2.0f, model_properties_gui->background.position.y + (model_properties_gui->background.dimensions.y / 2.0f) * 0.95f - model_properties_gui->close_button.box.dimensions.y / 2.0f);
 		set_text_position(&model_properties_gui->model_name_text, model_properties_gui->background.position.x - (model_properties_gui->model_name_text.normalized_dims.x / 2.0f), model_properties_gui->background.position.y + (model_properties_gui->background.dimensions.y / 2.0f) * 0.85f);
 		set_text_position(&model_properties_gui->model_index_text, model_properties_gui->background.position.x - (model_properties_gui->model_index_text.normalized_dims.x / 2.0f), model_properties_gui->background.position.y + (model_properties_gui->background.dimensions.y / 2.0f) * 0.7f);
+		set_text_position(&model_properties_gui->model_location_indicator_text, model_properties_gui->background.position.x - (model_properties_gui->background.dimensions.x / 2.0f) * 0.9f, model_properties_gui->background.position.y + (model_properties_gui->background.dimensions.y / 2.0f) * 0.45f);
+		set_text_position(&model_properties_gui->model_location_text, model_properties_gui->background.position.x - (model_properties_gui->background.dimensions.x / 2.0f) * 0.9f, model_properties_gui->background.position.y + (model_properties_gui->background.dimensions.y / 2.0f) * 0.30f);
 	}
 }
 
@@ -86,6 +119,8 @@ void draw_model_properties_gui(ModelPropertiesGUI *model_properties_gui, float c
 	if(model_properties_gui->show) {
 		show_text(&model_properties_gui->model_name_text, text_program);
 		show_text(&model_properties_gui->model_index_text, text_program);
+		show_text(&model_properties_gui->model_location_text, text_program);
+		show_text(&model_properties_gui->model_location_indicator_text, text_program);
 		draw_button(&model_properties_gui->close_button, text_program, current_time);
 		draw_rectangle_2d(&model_properties_gui->background);
 		draw_rectangle_2d(&model_properties_gui->move_tag);

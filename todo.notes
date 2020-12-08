@@ -10,6 +10,7 @@ ToDo:
 
 Keep In Mind:
 - Be careful when editing the data.variables file (causes huge allocation of memory if errors exist). If we did make a mistake the program will take more than usual time to initialise.
+- Be aware the stack memory. At some point it might result in a segmentation fault.
 
 Not Done:
 - How to do bounding box when the model is animation
@@ -34,8 +35,8 @@ Done:
 
 Time available:
  - 1 November 2020 to 1 July 2021
- - Today 05 Dec 2020
- - Days remaining 207
+ - Today 08 Dec 2020
+ - Days remaining 205
 
 
 Plan is as follows:

@@ -73,6 +73,7 @@ void handle_transition_gui(ModelLoaderGUI *model_loader_gui, uint8_t on_x, uint8
 			translate_rectangle_2d_by(&model_loader_gui->background_left, model_loader_gui->trn.transition_speed * -on_x, model_loader_gui->trn.transition_speed * -on_y);
 			translate_textbox_by(&model_loader_gui->model_load_textbox, model_loader_gui->trn.transition_speed * -on_x, model_loader_gui->trn.transition_speed * -on_y);
 			translate_text_by(&model_loader_gui->model_load_text, model_loader_gui->trn.transition_speed * -on_x, model_loader_gui->trn.transition_speed * -on_y);
+			translate_text_by(&model_loader_gui->model_load_textbox_indicator_text, model_loader_gui->trn.transition_speed * -on_x, model_loader_gui->trn.transition_speed * -on_y);
 			translate_button_by(&model_loader_gui->model_load_button, model_loader_gui->trn.transition_speed * -on_x, model_loader_gui->trn.transition_speed * -on_y);
 			model_loader_gui->trn.current_move_count += 1;
 		}
@@ -88,6 +89,7 @@ void handle_transition_gui(ModelLoaderGUI *model_loader_gui, uint8_t on_x, uint8
 			translate_rectangle_2d_by(&model_loader_gui->background_left, model_loader_gui->trn.transition_speed * on_x, model_loader_gui->trn.transition_speed * on_y);
 			translate_textbox_by(&model_loader_gui->model_load_textbox, model_loader_gui->trn.transition_speed * on_x, model_loader_gui->trn.transition_speed * on_y);
 			translate_text_by(&model_loader_gui->model_load_text, model_loader_gui->trn.transition_speed * on_x, model_loader_gui->trn.transition_speed * on_y);
+			translate_text_by(&model_loader_gui->model_load_textbox_indicator_text, model_loader_gui->trn.transition_speed * on_x, model_loader_gui->trn.transition_speed * -on_y);
 			translate_button_by(&model_loader_gui->model_load_button, model_loader_gui->trn.transition_speed * on_x, model_loader_gui->trn.transition_speed * on_y);
 			model_loader_gui->trn.current_move_count += 1;
 		}

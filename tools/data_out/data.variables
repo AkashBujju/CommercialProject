@@ -1,6 +1,7 @@
 SHADER rectangle_program rect_v_shader.shader texture_f_shader.shader
 SHADER text_program v_text.shader f_text.shader
 SHADER instanced_program instanced_v_shader.shader instanced_f_shader.shader
+SHADER instanced_helper_program helper_model.vert helper_model.frag
 SHADER dir_light_program v_dir_light.shader f_dir_light.shader
 SHADER spot_light_program v_spot_light.shader f_spot_light.shader
 

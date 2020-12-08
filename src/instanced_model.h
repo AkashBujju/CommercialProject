@@ -1,7 +1,7 @@
 #ifndef INSTANCED_MODEL_H
 #define INSTANCED_MODEL_H
 
-#define MAX_MODELS 25
+#define MAX_INSTANCED_MODELS 25
 
 #include <glad/glad.h>
 #include "math.h"
@@ -18,16 +18,16 @@ typedef struct InstancedModel {
 	GLuint instanceSpecularVBO;
 	GLuint instanceShininessVBO;
 	GLuint instanceModelVBO;
-	Matrix4 models[MAX_MODELS];
-	Vector3 positions[MAX_MODELS];
-	Vector3 scales[MAX_MODELS];
-	BoundingBox bounding_boxes[MAX_MODELS];
-	Vector3 rotation_axes[MAX_MODELS];
-	Vector3 ambient[MAX_MODELS];
-	Vector3 diffuse[MAX_MODELS];
-	Vector3 specular[MAX_MODELS];
-	float shininess[MAX_MODELS];
-	float angle_in_degree[MAX_MODELS];
+	Matrix4 models[MAX_INSTANCED_MODELS];
+	Vector3 positions[MAX_INSTANCED_MODELS];
+	Vector3 scales[MAX_INSTANCED_MODELS];
+	BoundingBox bounding_boxes[MAX_INSTANCED_MODELS];
+	Vector3 rotation_axes[MAX_INSTANCED_MODELS];
+	Vector3 ambient[MAX_INSTANCED_MODELS];
+	Vector3 diffuse[MAX_INSTANCED_MODELS];
+	Vector3 specular[MAX_INSTANCED_MODELS];
+	float shininess[MAX_INSTANCED_MODELS];
+	float angle_in_degree[MAX_INSTANCED_MODELS];
 	uint32_t num_models;
 	uint32_t num_vertices;
 	char model_name[50];

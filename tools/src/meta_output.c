@@ -17,6 +17,7 @@ extern Vector3 up;
 extern GLuint rectangle_program;
 extern GLuint text_program;
 extern GLuint instanced_program;
+extern GLuint instanced_helper_program;
 extern GLuint dir_light_program;
 extern GLuint spot_light_program;
 extern GLuint background_left_texture;
@@ -37,6 +38,7 @@ void load() {
 	rectangle_program = compile_shader(combine_string(shaders_path, "rect_v_shader.shader"), combine_string(shaders_path, "texture_f_shader.shader"));
 	text_program = compile_shader(combine_string(shaders_path, "v_text.shader"), combine_string(shaders_path, "f_text.shader"));
 	instanced_program = compile_shader(combine_string(shaders_path, "instanced_v_shader.shader"), combine_string(shaders_path, "instanced_f_shader.shader"));
+	instanced_helper_program = compile_shader(combine_string(shaders_path, "helper_model.vert"), combine_string(shaders_path, "helper_model.frag"));
 	dir_light_program = compile_shader(combine_string(shaders_path, "v_dir_light.shader"), combine_string(shaders_path, "f_dir_light.shader"));
 	spot_light_program = compile_shader(combine_string(shaders_path, "v_spot_light.shader"), combine_string(shaders_path, "f_spot_light.shader"));
 

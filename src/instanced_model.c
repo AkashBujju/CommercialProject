@@ -39,13 +39,11 @@ void load_instanced_model(InstancedModel *instanced_model, GLuint program, char*
 		float model_height = extreme_max.y - extreme_min.y;
 		float model_depth = extreme_max.z - extreme_min.z;
 
-		// printf("%+.3f %+.3f %+.3f\n", model_width, model_height, model_depth);
-
 		/* @Note: Change this if normals and other info are added */
 		/* 3 for the co-ordinates and 3 for the normals := 6 */
 		instanced_model->num_vertices = num_floats / 6;
 
-		for(uint32_t i = 0; i < MAX_MODELS; ++i) {
+		for(uint32_t i = 0; i < MAX_INSTANCED_MODELS; ++i) {
 		 	/* @Note: Change the below to custom values later */
 		 	init_vector(&instanced_model->scales[i], 1, 1, 1);
 		 	init_vector(&instanced_model->positions[i], 0, 0, 0);
@@ -65,27 +63,27 @@ void load_instanced_model(InstancedModel *instanced_model, GLuint program, char*
 		/* Instance VBOs */
 		glGenBuffers(1, &instanced_model->instanceAmbientVBO);
     	glBindBuffer(GL_ARRAY_BUFFER, instanced_model->instanceAmbientVBO);
-    	glBufferData(GL_ARRAY_BUFFER, sizeof(Vector3) * MAX_MODELS, instanced_model->ambient, GL_STATIC_DRAW);
+    	glBufferData(GL_ARRAY_BUFFER, sizeof(Vector3) * MAX_INSTANCED_MODELS, instanced_model->ambient, GL_STATIC_DRAW);
     	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
 		glGenBuffers(1, &instanced_model->instanceDiffuseVBO);
     	glBindBuffer(GL_ARRAY_BUFFER, instanced_model->instanceDiffuseVBO);
-    	glBufferData(GL_ARRAY_BUFFER, sizeof(Vector3) * MAX_MODELS, instanced_model->diffuse, GL_STATIC_DRAW);
+    	glBufferData(GL_ARRAY_BUFFER, sizeof(Vector3) * MAX_INSTANCED_MODELS, instanced_model->diffuse, GL_STATIC_DRAW);
     	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
 		glGenBuffers(1, &instanced_model->instanceSpecularVBO);
     	glBindBuffer(GL_ARRAY_BUFFER, instanced_model->instanceSpecularVBO);
-    	glBufferData(GL_ARRAY_BUFFER, sizeof(Vector3) * MAX_MODELS, instanced_model->specular, GL_STATIC_DRAW);
+    	glBufferData(GL_ARRAY_BUFFER, sizeof(Vector3) * MAX_INSTANCED_MODELS, instanced_model->specular, GL_STATIC_DRAW);
     	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
 		glGenBuffers(1, &instanced_model->instanceShininessVBO);
     	glBindBuffer(GL_ARRAY_BUFFER, instanced_model->instanceShininessVBO);
-    	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * MAX_MODELS, instanced_model->shininess, GL_STATIC_DRAW);
+    	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * MAX_INSTANCED_MODELS, instanced_model->shininess, GL_STATIC_DRAW);
     	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
 		glGenBuffers(1, &instanced_model->instanceModelVBO);
     	glBindBuffer(GL_ARRAY_BUFFER, instanced_model->instanceModelVBO);
-    	glBufferData(GL_ARRAY_BUFFER, sizeof(Matrix4) * MAX_MODELS, instanced_model->models, GL_STATIC_DRAW);
+    	glBufferData(GL_ARRAY_BUFFER, sizeof(Matrix4) * MAX_INSTANCED_MODELS, instanced_model->models, GL_STATIC_DRAW);
     	glBindBuffer(GL_ARRAY_BUFFER, 0);
 		/* Instance VBOs */
 
@@ -166,9 +164,9 @@ void load_instanced_model(InstancedModel *instanced_model, GLuint program, char*
 }
 
 void add_model(InstancedModel *instanced_model, float x, float y, float z, char *material_name) {
-	if(instanced_model->num_models >= MAX_MODELS) {
-		printf("WARNING: num_models(%d) >= MAX_MODELS(%d)\n", instanced_model->num_models, MAX_MODELS);
-		printf("WARNING: Setting num_models to %d\n", MAX_MODELS);
+	if(instanced_model->num_models >= MAX_INSTANCED_MODELS) {
+		printf("WARNING: num_models(%d) >= MAX_INSTANCED_MODELS(%d)\n", instanced_model->num_models, MAX_INSTANCED_MODELS);
+		printf("WARNING: Setting num_models to %d\n", MAX_INSTANCED_MODELS);
 	}
 	else {
 		instanced_model->num_models += 1;
@@ -188,7 +186,7 @@ void translate_instanced_model(InstancedModel *instanced_model, uint32_t model_i
 	}
 }
 
-/* @Note: For now we move only along one axes at a time */
+/* @TODO: For now we move only along one axes at a time */
 void move_instanced_model_along(InstancedModel *instanced_model, uint32_t model_index, Vector *ray, uint8_t along_x, uint8_t along_y, uint8_t along_z) {
 	if(model_index >= instanced_model->num_models) {
 		printf("WARNING: In move_instanced_model_along(): model_index(%u) >= num_models(%u)\n", model_index, instanced_model->num_models);

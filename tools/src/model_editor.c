@@ -9,6 +9,7 @@
 #include "../../src/instanced_model.h"
 #include "model_loader_gui.h"
 #include "model_properties_gui.h"
+#include "helper_models.h"
 #include "meta_output.h"
 
 Vector3 front, position, up;
@@ -34,10 +35,11 @@ void character_callback(GLFWwindow*, unsigned int);
 
 uint16_t window_width, window_height;
 Matrix4 view, projection, text_projection;
-GLuint rectangle_program, text_program, instanced_program, dir_light_program, spot_light_program;
+GLuint rectangle_program, text_program, instanced_program, dir_light_program, spot_light_program, instanced_helper_program;
 GLuint background_left_texture, box_texture, ht_box_texture, button_texture, ht_button_texture, cursor_texture, model_properties_background_texture, close_button_texture, move_tag_texture;
 
-InstancedModel ism_person_try;
+InstancedModel instanced_model;
+InstancedHelperModel instanced_helper_model;
 Font consolas, georgia_bold_12, georgia_bold_16, georgia_bold_20;
 ModelLoaderGUI model_loader_gui;
 ModelPropertiesGUI model_properties_gui;
@@ -47,18 +49,23 @@ int main() {
 	load();
 	enable_cursor = 1;
 
-	load_instanced_model(&ism_person_try, instanced_program, "cube_1", combine_string(tmp_models_path, "cube_1.model"));
-	add_model(&ism_person_try, 0, 0, 0, "pearl");
+	load_instanced_model(&instanced_model, instanced_program, "move_stick", combine_string(tmp_models_path, "move_stick.model"));
+	add_model(&instanced_model, 0, 0, 0, "pearl");
+
+	load_instanced_helper_model(&instanced_helper_model, instanced_helper_program, combine_string(tmp_models_path, "smooth_cube.model"));
+	add_helper_model(&instanced_helper_model, 0, 0, 0);
+	set_color_instanced_helper_model(&instanced_helper_model, 0, 1, 0, 0);
+	scale_instanced_helper_model(&instanced_helper_model, 0, 0.1f, 0.1f, 0.1f);
 
 	InstancedDirLight instanced_dir_light;
 	load_instanced_dir_light(&instanced_dir_light, dir_light_program, combine_string(tmp_models_path, "cube_1.model"), 1);
-	translate_instanced_dir_light(&instanced_dir_light, 0, 0, 0, 3);
+	translate_instanced_dir_light(&instanced_dir_light, 0, 3, 0, 3);
 	scale_instanced_dir_light(&instanced_dir_light, 0, 0.1f, 0.1f, 0.1f);
 
 	InstancedSpotLight instanced_spot_light;
 	load_instanced_spot_light(&instanced_spot_light, spot_light_program, combine_string(tmp_models_path, "cube_1.model"), 0);
 
-	/* Setting Lights Attributes once */
+	/* Setting Lights Attributes once for instanced_program */
 	Vector3 light_color, diffuse_color, specular_color, ambient_color;
 	init_vector(&light_color, 1, 1, 1);
 	init_vector(&specular_color, 1, 1, 1);
@@ -73,8 +80,12 @@ int main() {
 	set_float(instanced_program, "light_constant", 1);
 	set_float(instanced_program, "light_linear", 0.09f);
 	set_float(instanced_program, "light_quadratic", 0.032f);
-	set_vector3(instanced_program, "viewPos", &position);
-	/* Setting Lights Attributes once */
+	/* Setting Lights Attributes once for instanced_program */
+
+	/* Setting Lights Attributes once for instanced_helper_program */
+	Vector3 lightColor = { 1, 1, 1 };
+	set_vector3(instanced_helper_program, "lightColor", &lightColor);
+	/* Setting Lights Attributes once for instanced_helper_program */
 
 	init_model_loader_gui(&model_loader_gui, &georgia_bold_12, &georgia_bold_16, &georgia_bold_20, 0.007f, 55);
 	init_model_properties_gui(&model_properties_gui, &georgia_bold_12, &georgia_bold_16, &georgia_bold_20);
@@ -93,15 +104,26 @@ int main() {
 		set_matrix4(rectangle_program, "projection", &projection);
 		set_matrix4(instanced_program, "view", &view);
 		set_matrix4(instanced_program, "projection", &projection);
+		set_matrix4(instanced_helper_program, "view", &view);
+		set_matrix4(instanced_helper_program, "projection", &projection);
 		set_matrix4(dir_light_program, "view", &view);
 		set_matrix4(dir_light_program, "projection", &projection);
 		set_matrix4(spot_light_program, "view", &view);
 		set_matrix4(spot_light_program, "projection", &projection);
 		/* Set the view and projection */
 
-		draw_instanced_model(&ism_person_try, &instanced_dir_light, &instanced_spot_light);
+		/* Setting viewPos */
+		glUseProgram(instanced_program);
+		set_vector3(instanced_program, "viewPos", &position);
+		glUseProgram(instanced_helper_program);
+		set_vector3(instanced_helper_program, "viewPos", &position);
+		/* Setting viewPos */
+
+		draw_instanced_model(&instanced_model, &instanced_dir_light, &instanced_spot_light);
 		draw_instanced_dir_light(&instanced_dir_light);
 		draw_instanced_spot_light(&instanced_spot_light);
+
+		draw_instanced_helper_model(&instanced_helper_model, &instanced_dir_light);
 
 		handle_transition_gui(&model_loader_gui, 1, 0);
 		draw_model_loader_gui(&model_loader_gui, current_time);
@@ -243,14 +265,14 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 		Vector ray = compute_mouse_ray_2(norm.x, norm.y, &view, &projection);
 
 		/* Test */
-		// scale_instanced_model_along(&ism_person_try, 0, &ray, 1, 0, 0);
+		// scale_instanced_model_along(&instanced_model, 0, &ray, 1, 0, 0);
 		/* Test */
 		
-		uint8_t hit = obb(&ism_person_try.models[0], &ism_person_try.positions[0], ism_person_try.bounding_boxes[0].width, ism_person_try.bounding_boxes[0].height, ism_person_try.bounding_boxes[0].depth, &ray);
+		uint8_t hit = obb(&instanced_model.models[0], &instanced_model.positions[0], instanced_model.bounding_boxes[0].width, instanced_model.bounding_boxes[0].height, instanced_model.bounding_boxes[0].depth, &ray);
 
 		if(hit) {
 			model_properties_gui.show = 1;
-			set_instanced_model_info_to_properties_gui(&model_properties_gui, &ism_person_try, 0);
+			set_instanced_model_info_to_properties_gui(&model_properties_gui, &instanced_model, 0);
 		}
 
 		handle_mouse_click_gui(&model_loader_gui, &norm_mouse_pos);
@@ -266,7 +288,7 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 		// 	char* text = model_loader_gui.model_load_textbox.text.text;
 
 		// 	if(strcmp(text, "person_try") == 0)
-		// 		add_model(&ism_person_try, 0, 0, 0, "pearl");
+		// 		add_model(&instanced_model, 0, 0, 0, "pearl");
 		// }
 	}
 }
