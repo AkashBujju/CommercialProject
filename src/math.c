@@ -2,6 +2,7 @@
 #include <math.h>
 #include <string.h>
 #include <stdio.h> // @Tmp
+#include "instanced_model.h"
 
 float f_max(float f1, float f2) {
 	if (f1 > f2)
@@ -523,119 +524,138 @@ uint8_t get_position_along_axis(Vector3 *position, Vector3 *result, Vector *ray,
 	return 1;
 }
 
-uint8_t obb(Matrix4 *model, Vector3 *position, float width, float height, float depth, Vector *ray) {
-	Vector3 right, up, forward;
+uint32_t obb(Matrix4 *models, Vector3 *positions, uint32_t count, BoundingBox *bounding_boxes, Vector *ray) {
+	unsigned int hit_indices[50];
+	unsigned int hit_count = 0;
 
-	float *matrix = model->matrix;
-	init_vector(&right, matrix[0], matrix[1], matrix[2]);
-	init_vector(&up, matrix[4], matrix[5], matrix[6]);
-	init_vector(&forward, matrix[8], matrix[9], matrix[10]);
+	for(uint32_t i = 0; i < count; ++i) {
+		Vector3 right, up, forward;
 
-	normalize_vector(&right);
-	normalize_vector(&up);
-	normalize_vector(&forward);
+		float *matrix = models[i].matrix;
+		init_vector(&right, matrix[0], matrix[1], matrix[2]);
+		init_vector(&up, matrix[4], matrix[5], matrix[6]);
+		init_vector(&forward, matrix[8], matrix[9], matrix[10]);
 
-	Vector3 bb_ray_delta = sub(position, &ray->point);
-	Vector3 min_bound, max_bound;
-	float width_by_2 = width / 2;
-	float height_by_2 = height / 2;
-	float depth_by_2 = depth / 2;
+		normalize_vector(&right);
+		normalize_vector(&up);
+		normalize_vector(&forward);
 
-	init_vector(&min_bound, -width_by_2, -height_by_2, -depth_by_2);
-	init_vector(&max_bound, width_by_2, height_by_2, depth_by_2);
+		Vector3 bb_ray_delta = sub(&positions[i], &ray->point);
+		Vector3 min_bound, max_bound;
+		float width_by_2 = bounding_boxes[i].width / 2;
+		float height_by_2 = bounding_boxes[i].height / 2;
+		float depth_by_2 = bounding_boxes[i].depth / 2;
 
-	float t_min = 0, t_max = 1000000;
-	// x-axis
-	{
-		float nom_len = dot(&right, &bb_ray_delta);
-		float denom_len = dot(&ray->direction, &right);
-		float min, max;
+		init_vector(&min_bound, -width_by_2, -height_by_2, -depth_by_2);
+		init_vector(&max_bound, width_by_2, height_by_2, depth_by_2);
 
-		if(fabs(denom_len) > 0.00001f) {
-			min = (nom_len + min_bound.x) / denom_len;
-			max = (nom_len + max_bound.x) / denom_len;
+		float t_min = 0, t_max = 1000000;
+		// x-axis
+		{
+			float nom_len = dot(&right, &bb_ray_delta);
+			float denom_len = dot(&ray->direction, &right);
+			float min, max;
 
-			if(min < max) {
-				t_min = min;
-				t_max = max;
+			if(fabs(denom_len) > 0.00001f) {
+				min = (nom_len + min_bound.x) / denom_len;
+				max = (nom_len + max_bound.x) / denom_len;
+
+				if(min < max) {
+					t_min = min;
+					t_max = max;
+				}
+				else {
+					t_min = max;
+					t_max = min;
+				}
+
+				if(t_max < t_min)
+					continue;
 			}
 			else {
-				t_min = max;
-				t_max = min;
-			}
-
-			if(t_max < t_min) {
-				return 0;
+				if((-nom_len + min_bound.x) > 0 || (-nom_len + max_bound.x) < 0)
+					continue;
 			}
 		}
-		else {
-			if((-nom_len + min_bound.x) > 0 || (-nom_len + max_bound.x) < 0) {
-				return 0;
+
+		// y-axis
+		{
+			float nom_len = dot(&up, &bb_ray_delta);
+			float denom_len = dot(&ray->direction, &up);
+			float min, max;
+
+			if(fabs(denom_len) > 0.00001f) {
+				min = (nom_len + min_bound.y) / denom_len;
+				max = (nom_len + max_bound.y) / denom_len;
+
+				if(min < max) {
+					t_min = f_max(t_min, min);
+					t_max = f_min(t_max, max);
+				}
+				else {
+					t_min = f_max(t_min, max);
+					t_max = f_min(t_max, min);
+				}
+
+				if(t_max < t_min)
+					continue;
 			}
+			else {
+				if((-nom_len + min_bound.y) > 0 || (-nom_len + max_bound.y) < 0)
+					continue;
+			}
+		}
+
+		// z-axis
+		{
+			float nom_len = dot(&forward, &bb_ray_delta);
+			float denom_len = dot(&ray->direction, &forward);
+			float min, max;
+
+			if(fabs(denom_len) > 0.00001f) {
+				min = (nom_len + min_bound.z) / denom_len;
+				max = (nom_len + max_bound.z) / denom_len;
+
+				if(min < max) {
+					t_min = f_max(t_min, min);
+					t_max = f_min(t_max, max);
+				}
+				else {
+					t_min = f_max(t_min, max);
+					t_max = f_min(t_max, min);
+				}
+
+				if(t_max < t_min)
+					continue;
+			}
+			else {
+				if((-nom_len + min_bound.z) > 0 || (-nom_len + max_bound.z) < 0)
+					continue;
+			}
+		}
+
+		hit_indices[hit_count++] = i;	
+	}
+
+	/* @TODO: FIX THE BELOW */
+	// Finding the cuboid that is closest to the camera.
+	if(hit_count == 0)
+		return -1;
+	else if(hit_count == 1)
+		return hit_indices[0];
+
+	float current_distance = 0xFFFFFF;
+	unsigned int min_index = 0;
+	for(unsigned int i = 0; i < hit_count; ++i) {
+		int current_index = hit_indices[i];
+		float distance = get_distance(&ray->point, &positions[current_index]);
+		if(distance < current_distance) {
+			current_distance = distance;
+			min_index = current_index;
 		}
 	}
 
-	// y-axis
-	{
-		float nom_len = dot(&up, &bb_ray_delta);
-		float denom_len = dot(&ray->direction, &up);
-		float min, max;
-
-		if(fabs(denom_len) > 0.00001f) {
-			min = (nom_len + min_bound.y) / denom_len;
-			max = (nom_len + max_bound.y) / denom_len;
-
-			if(min < max) {
-				t_min = f_max(t_min, min);
-				t_max = f_min(t_max, max);
-			}
-			else {
-				t_min = f_max(t_min, max);
-				t_max = f_min(t_max, min);
-			}
-
-			if(t_max < t_min) {
-				return 0;
-			}
-		}
-		else {
-			if((-nom_len + min_bound.y) > 0 || (-nom_len + max_bound.y) < 0) {
-				return 0;
-			}
-		}
-	}
-
-	// z-axis
-	{
-		float nom_len = dot(&forward, &bb_ray_delta);
-		float denom_len = dot(&ray->direction, &forward);
-		float min, max;
-
-		if(fabs(denom_len) > 0.00001f) {
-			min = (nom_len + min_bound.z) / denom_len;
-			max = (nom_len + max_bound.z) / denom_len;
-
-			if(min < max) {
-				t_min = f_max(t_min, min);
-				t_max = f_min(t_max, max);
-			}
-			else {
-				t_min = f_max(t_min, max);
-				t_max = f_min(t_max, min);
-			}
-
-			if(t_max < t_min) {
-				return 0;
-			}
-		}
-		else {
-			if((-nom_len + min_bound.z) > 0 || (-nom_len + max_bound.z) < 0) {
-				return 0;
-			}
-		}
-	}
-
-	return 1;
+	return min_index;
 }
 
 int in_plane_point(Box *box, Vector3 *res, Vector3 *ray_start, Vector3* ray_end) {
@@ -658,7 +678,7 @@ int in_plane_point(Box *box, Vector3 *res, Vector3 *ray_start, Vector3* ray_end)
 
 	if(k >= 0)
 		return 1;
-	
+
 	return 0;
 }
 
@@ -756,10 +776,10 @@ Vector3 line_intersect(LineEq *line_eq_1, LineEq *line_eq_2) {
 
 uint8_t in_rect(Vector2 *mouse_pos, Vector2 *rect_position, Vector2 *rect_dimensions) {
 	if(
-	  (mouse_pos->x > rect_position->x - (rect_dimensions->x / 2)) &&
-	  (mouse_pos->x < rect_position->x + (rect_dimensions->x / 2)) &&
-	  (mouse_pos->y < rect_position->y + (rect_dimensions->y / 2)) &&
-	  (mouse_pos->y > rect_position->y - (rect_dimensions->y / 2))) {
+			(mouse_pos->x > rect_position->x - (rect_dimensions->x / 2)) &&
+			(mouse_pos->x < rect_position->x + (rect_dimensions->x / 2)) &&
+			(mouse_pos->y < rect_position->y + (rect_dimensions->y / 2)) &&
+			(mouse_pos->y > rect_position->y - (rect_dimensions->y / 2))) {
 		return 1;
 	}
 

@@ -39,7 +39,7 @@ GLuint rectangle_program, text_program, instanced_program, dir_light_program, sp
 GLuint background_left_texture, box_texture, ht_box_texture, button_texture, ht_button_texture, cursor_texture, model_properties_background_texture, close_button_texture, move_tag_texture;
 
 InstancedModel instanced_model;
-InstancedHelperModel instanced_helper_model;
+HelperModels helper_models;
 Font consolas, georgia_bold_12, georgia_bold_16, georgia_bold_20;
 ModelLoaderGUI model_loader_gui;
 ModelPropertiesGUI model_properties_gui;
@@ -49,13 +49,13 @@ int main() {
 	load();
 	enable_cursor = 1;
 
-	load_instanced_model(&instanced_model, instanced_program, "move_stick", combine_string(tmp_models_path, "move_stick.model"));
+	load_instanced_model(&instanced_model, instanced_program, "move_stick", combine_string(tmp_models_path, "person_try.model"));
 	add_model(&instanced_model, 0, 0, 0, "pearl");
+	translate_instanced_model(&instanced_model, 0, 3, 3, -3);
+	scale_instanced_model(&instanced_model, 0, 0.5f, 0.5f, 0.5f);
 
-	load_instanced_helper_model(&instanced_helper_model, instanced_helper_program, combine_string(tmp_models_path, "smooth_cube.model"));
-	add_helper_model(&instanced_helper_model, 0, 0, 0);
-	set_color_instanced_helper_model(&instanced_helper_model, 0, 1, 0, 0);
-	scale_instanced_helper_model(&instanced_helper_model, 0, 0.1f, 0.1f, 0.1f);
+	init_helper_models(&helper_models, instanced_helper_program);
+	set_move_sticks(&helper_models, &instanced_model, 0);
 
 	InstancedDirLight instanced_dir_light;
 	load_instanced_dir_light(&instanced_dir_light, dir_light_program, combine_string(tmp_models_path, "cube_1.model"), 1);
@@ -123,7 +123,7 @@ int main() {
 		draw_instanced_dir_light(&instanced_dir_light);
 		draw_instanced_spot_light(&instanced_spot_light);
 
-		draw_instanced_helper_model(&instanced_helper_model, &instanced_dir_light);
+		draw_helper_models(&helper_models, &instanced_dir_light);
 
 		handle_transition_gui(&model_loader_gui, 1, 0);
 		draw_model_loader_gui(&model_loader_gui, current_time);
@@ -134,6 +134,8 @@ int main() {
 		Vector2 norm_mouse_pos;
 		norm_mouse_pos.x = f_normalize(x_pos, 0, window_width, -1, +1);
 		norm_mouse_pos.y = f_normalize(y_pos, 0, window_height, +1, -1);
+		/* @Note: Change this in the future */
+
 		translate_move_tag_and_update_properties_gui(&model_properties_gui, norm_mouse_pos.x, norm_mouse_pos.y);
 		draw_model_properties_gui(&model_properties_gui, current_time);
 
@@ -176,6 +178,13 @@ void process_input(GLFWwindow *window) {
 	}
 	if(enable_cursor)
 		return;
+
+	/*
+	if(glfwGetKey(window, GLFW_KEY_Z) == GLFW_PRESS) {
+		print_vector(&position);
+		print_vector(&front);
+	}
+	*/
 
 	if(glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
 		Vector3 res = cross(&front, &up);
@@ -268,12 +277,14 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 		// scale_instanced_model_along(&instanced_model, 0, &ray, 1, 0, 0);
 		/* Test */
 		
-		uint8_t hit = obb(&instanced_model.models[0], &instanced_model.positions[0], instanced_model.bounding_boxes[0].width, instanced_model.bounding_boxes[0].height, instanced_model.bounding_boxes[0].depth, &ray);
+		uint32_t hit_index = obb(instanced_model.models, instanced_model.positions, instanced_model.num_models, instanced_model.bounding_boxes, &ray);
 
-		if(hit) {
+		if(hit_index != -1) {
 			model_properties_gui.show = 1;
-			set_instanced_model_info_to_properties_gui(&model_properties_gui, &instanced_model, 0);
+			set_instanced_model_info_to_properties_gui(&model_properties_gui, &instanced_model, hit_index);
 		}
+
+		handle_mouse_click_helper_models(&helper_models, &ray);
 
 		handle_mouse_click_gui(&model_loader_gui, &norm_mouse_pos);
 		handle_mouse_click_properties_gui(&model_properties_gui, &norm_mouse_pos);

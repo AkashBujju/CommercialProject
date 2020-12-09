@@ -6,6 +6,7 @@
 #include <string.h>
 
 extern char* assets_path;
+extern char* tmp_models_path;
 
 void load_instanced_helper_model(InstancedHelperModel *instanced_helper_model, GLuint program, const char* model_filename) {
 	instanced_helper_model->program = program;
@@ -162,6 +163,9 @@ void scale_instanced_helper_model(InstancedHelperModel *instanced_helper_model, 
 		instanced_helper_model->scales[model_index].x *= x;
 		instanced_helper_model->scales[model_index].y *= y;
 		instanced_helper_model->scales[model_index].z *= z;
+		instanced_helper_model->bounding_boxes[model_index].width *= x;
+		instanced_helper_model->bounding_boxes[model_index].height *= y;
+		instanced_helper_model->bounding_boxes[model_index].depth *= z;
 	}
 }
 
@@ -226,4 +230,71 @@ void draw_instanced_helper_model(InstancedHelperModel *instanced_helper_model, I
 
 	glBindVertexArray(instanced_helper_model->vao);
 	glDrawArraysInstanced(GL_TRIANGLES, 0, instanced_helper_model->num_vertices, instanced_helper_model->num_models);
+}
+
+void init_helper_models(HelperModels *helper_models, GLuint instanced_helper_program) {
+	/* Origin */
+	load_instanced_helper_model(&helper_models->cubes, instanced_helper_program, combine_string(tmp_models_path, "smooth_cube.model"));
+	add_helper_model(&helper_models->cubes, 0, 0, 0);
+	set_color_instanced_helper_model(&helper_models->cubes, 0, 1, 0, 0);
+	scale_instanced_helper_model(&helper_models->cubes, 0, 0.1f, 0.1f, 0.1f);
+	/* Origin */
+
+	/* Axes */
+	add_helper_model(&helper_models->cubes, 0, 0, 0);
+	set_color_instanced_helper_model(&helper_models->cubes, 1, 0, 0, 1);
+	scale_instanced_helper_model(&helper_models->cubes, 1, 20, 0.015f, 0.015f);
+
+	add_helper_model(&helper_models->cubes, 0, 0, 0);
+	set_color_instanced_helper_model(&helper_models->cubes, 2, 1, 0, 0);
+	scale_instanced_helper_model(&helper_models->cubes, 2, 20, 0.015f, 0.015f);
+	rotate_instanced_helper_model(&helper_models->cubes, 2, 0, 0, 1, 90);
+
+	add_helper_model(&helper_models->cubes, 0, 0, 0);
+	set_color_instanced_helper_model(&helper_models->cubes, 3, 0, 1, 0);
+	scale_instanced_helper_model(&helper_models->cubes, 3, 20, 0.015f, 0.015f);
+	rotate_instanced_helper_model(&helper_models->cubes, 3, 0, 1, 0, 90);
+	/* Axes */
+
+	/* Move sticks */
+	add_helper_model(&helper_models->cubes, 0, 0, 0);
+	set_color_instanced_helper_model(&helper_models->cubes, 4, 0, 0, 1);
+
+	add_helper_model(&helper_models->cubes, 0, 0, 0);
+	set_color_instanced_helper_model(&helper_models->cubes, 5, 1, 0, 0);
+
+	add_helper_model(&helper_models->cubes, 0, 0, 0);
+	set_color_instanced_helper_model(&helper_models->cubes, 6, 0, 1, 0);
+	/* Move sticks */
+}
+
+void set_move_sticks(HelperModels *helper_models, InstancedModel *instanced_model, uint32_t model_index) {
+	Vector3 model_pos = { instanced_model->positions[model_index].x, instanced_model->positions[model_index].y, instanced_model->positions[model_index].z };
+	float move_stick_x_pos = model_pos.x + instanced_model->bounding_boxes[model_index].width / 2.0f;
+	float move_stick_y_pos = model_pos.y + instanced_model->bounding_boxes[model_index].height / 2.0f;
+	float move_stick_z_pos = model_pos.z + instanced_model->bounding_boxes[model_index].depth / 2.0f;
+
+	translate_instanced_helper_model(&helper_models->cubes, 4, move_stick_x_pos + 0.8f, model_pos.y, model_pos.z);
+	scale_instanced_helper_model(&helper_models->cubes, 4, 0.3f, 0.05f, 0.05f);
+
+	translate_instanced_helper_model(&helper_models->cubes, 5, model_pos.x, move_stick_y_pos + 0.8f, model_pos.z);
+	rotate_instanced_helper_model(&helper_models->cubes, 5, 0, 0, 1, 90);
+	scale_instanced_helper_model(&helper_models->cubes, 5, 0.3f, 0.05f, 0.05f);
+
+	translate_instanced_helper_model(&helper_models->cubes, 6, model_pos.x, model_pos.y, move_stick_z_pos + 0.8f);
+	rotate_instanced_helper_model(&helper_models->cubes, 6, 0, 1, 0, 90);
+	scale_instanced_helper_model(&helper_models->cubes, 6, 0.3f, 0.05f, 0.05f);
+}
+
+void handle_mouse_click_helper_models(HelperModels *helper_models, Vector *ray) {
+	uint32_t hit_index = obb(helper_models->cubes.models, helper_models->cubes.positions, helper_models->cubes.num_models, helper_models->cubes.bounding_boxes, ray);
+
+	/* @TEST */
+	if(hit_index != -1) {
+		set_color_instanced_helper_model(&helper_models->cubes, hit_index, 1, 1, 1);
+	}
+}
+
+void draw_helper_models(HelperModels *helper_models, InstancedDirLight *instanced_dir_light) {
+	draw_instanced_helper_model(&helper_models->cubes, instanced_dir_light);
 }

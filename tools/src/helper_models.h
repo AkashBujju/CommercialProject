@@ -32,6 +32,12 @@ void set_color_instanced_helper_model(InstancedHelperModel *instanced_helper_mod
 
 typedef struct HelperModels {
 	InstancedHelperModel cubes;	
+	uint8_t show_move_sticks;
 } HelperModels;
+
+void init_helper_models(HelperModels *helper_models, GLuint instanced_helper_program);
+void set_move_sticks(HelperModels *helper_models, InstancedModel *instanced_model, uint32_t model_index);
+void draw_helper_models(HelperModels *helper_models, InstancedDirLight *instanced_dir_light);
+void handle_mouse_click_helper_models(HelperModels *helper_models, Vector *ray);
 
 #endif

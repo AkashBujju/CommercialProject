@@ -20,5 +20,5 @@ FONT georgia_bold_12 12 fonts/georgia_bold.ttf
 FONT georgia_bold_16 16 fonts/georgia_bold.ttf
 FONT georgia_bold_20 20 fonts/georgia_bold.ttf
 
-CAMERA_FRONT 0 0 -1
-CAMERA_POSITION 0 0 10
+CAMERA_FRONT -0.386 -0.682 -0.620
+CAMERA_POSITION 6.46 9.8 10.8

@@ -68,8 +68,8 @@ void load() {
 	init_freetype(&ft_4);
 	init_font(&georgia_bold_20, 20, combine_string(assets_path, "fonts/georgia_bold.ttf"), &ft_4);
 
-	init_vector(&front, 0.000, 0.000, -1.000);
-	init_vector(&position, 0.000, 0.000, 10.000);
+	init_vector(&front, -0.386, -0.682, -0.620);
+	init_vector(&position, 6.460, 9.800, 10.800);
 	init_vector(&up, 0, 1, 0);
 	make_identity(&view);	projection = perspective(45.0f, (float)window_width / window_height, 0.1f, 500.0f);
 	text_projection = ortho(0, window_width, 0, window_height);

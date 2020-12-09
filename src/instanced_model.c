@@ -244,6 +244,9 @@ void scale_instanced_model(InstancedModel *instanced_model, uint32_t model_index
 		instanced_model->scales[model_index].x *= x;
 		instanced_model->scales[model_index].y *= y;
 		instanced_model->scales[model_index].z *= z;
+		instanced_model->bounding_boxes[model_index].width *= x;
+		instanced_model->bounding_boxes[model_index].height *= y;
+		instanced_model->bounding_boxes[model_index].depth *= z;
 	}
 }
 
