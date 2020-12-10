@@ -75,7 +75,6 @@ void load_instanced_helper_model(InstancedHelperModel *instanced_helper_model, G
 		glBindBuffer(GL_ARRAY_BUFFER, instanced_helper_model->vbo);
 		/* @Note: Should we change this to dynamic draw later? */
 		glBufferData(GL_ARRAY_BUFFER, sizeof(float) * num_floats, vertices, GL_STATIC_DRAW);
-		/* @TODO: We are using only the 1st three floats from each vertex. So, should we make seperate files and load this from there */
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_TRUE, 6 * sizeof(float), (void*)0);
 		glEnableVertexAttribArray(0);
 		glVertexAttribPointer(1, 3, GL_FLOAT, GL_TRUE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
@@ -233,6 +232,8 @@ void draw_instanced_helper_model(InstancedHelperModel *instanced_helper_model, I
 }
 
 void init_helper_models(HelperModels *helper_models, GLuint instanced_helper_program) {
+	helper_models->active_helper_model_index = -1;
+
 	/* Origin */
 	load_instanced_helper_model(&helper_models->cubes, instanced_helper_program, combine_string(tmp_models_path, "smooth_cube.model"));
 	add_helper_model(&helper_models->cubes, 0, 0, 0);
@@ -266,32 +267,126 @@ void init_helper_models(HelperModels *helper_models, GLuint instanced_helper_pro
 	add_helper_model(&helper_models->cubes, 0, 0, 0);
 	set_color_instanced_helper_model(&helper_models->cubes, 6, 0, 1, 0);
 	/* Move sticks */
+
+	/* Setting default colors */
+	init_vector(&helper_models->default_colors[0], 1, 0, 0);
+	init_vector(&helper_models->default_colors[1], 0, 0, 1);
+	init_vector(&helper_models->default_colors[2], 1, 0, 0);
+	init_vector(&helper_models->default_colors[3], 0, 1, 0);
+	init_vector(&helper_models->default_colors[4], 0, 0, 1);
+	init_vector(&helper_models->default_colors[5], 1, 0, 0);
+	init_vector(&helper_models->default_colors[6], 0, 1, 0);
+	/* Setting default colors */
 }
 
 void set_move_sticks(HelperModels *helper_models, InstancedModel *instanced_model, uint32_t model_index) {
-	Vector3 model_pos = { instanced_model->positions[model_index].x, instanced_model->positions[model_index].y, instanced_model->positions[model_index].z };
-	float move_stick_x_pos = model_pos.x + instanced_model->bounding_boxes[model_index].width / 2.0f;
-	float move_stick_y_pos = model_pos.y + instanced_model->bounding_boxes[model_index].height / 2.0f;
-	float move_stick_z_pos = model_pos.z + instanced_model->bounding_boxes[model_index].depth / 2.0f;
+	helper_models->active_instanced_model_index = model_index;
 
-	translate_instanced_helper_model(&helper_models->cubes, 4, move_stick_x_pos + 0.8f, model_pos.y, model_pos.z);
+	Vector3 model_pos = { instanced_model->positions[model_index].x, instanced_model->positions[model_index].y, instanced_model->positions[model_index].z };
+	float move_stick_x_pos = model_pos.x + instanced_model->bounding_boxes[model_index].width / 2.0f + 0.8f;
+	float move_stick_y_pos = model_pos.y + instanced_model->bounding_boxes[model_index].height / 2.0f + 0.8f;
+	float move_stick_z_pos = model_pos.z + instanced_model->bounding_boxes[model_index].depth / 2.0f + 0.8f;
+
+	translate_instanced_helper_model(&helper_models->cubes, 4, move_stick_x_pos, model_pos.y, model_pos.z);
 	scale_instanced_helper_model(&helper_models->cubes, 4, 0.3f, 0.05f, 0.05f);
 
-	translate_instanced_helper_model(&helper_models->cubes, 5, model_pos.x, move_stick_y_pos + 0.8f, model_pos.z);
+	translate_instanced_helper_model(&helper_models->cubes, 5, model_pos.x, move_stick_y_pos, model_pos.z);
 	rotate_instanced_helper_model(&helper_models->cubes, 5, 0, 0, 1, 90);
 	scale_instanced_helper_model(&helper_models->cubes, 5, 0.3f, 0.05f, 0.05f);
 
-	translate_instanced_helper_model(&helper_models->cubes, 6, model_pos.x, model_pos.y, move_stick_z_pos + 0.8f);
+	translate_instanced_helper_model(&helper_models->cubes, 6, model_pos.x, model_pos.y, move_stick_z_pos);
 	rotate_instanced_helper_model(&helper_models->cubes, 6, 0, 1, 0, 90);
 	scale_instanced_helper_model(&helper_models->cubes, 6, 0.3f, 0.05f, 0.05f);
+}
+
+void move_helper_models_along(HelperModels *helper_models, uint32_t model_index, Vector *ray, uint8_t along_x, uint8_t along_y, uint8_t along_z) {
+	if(model_index >= helper_models->cubes.num_models) {
+		printf("WARNING: In move_helper_models_along(): model_index(%u) >= num_models(%u)\n", model_index, helper_models->cubes.num_models);
+	}
+	else {
+		Vector3 pos;
+		uint8_t valid = get_position_along_axis(&helper_models->cubes.positions[model_index], &pos, ray, along_x, along_y, along_z);
+
+		if(valid) {
+			if(along_x) {
+				init_vector(&pos, pos.x, helper_models->cubes.positions[model_index].y, helper_models->cubes.positions[model_index].z);
+			}
+			else if(along_y) {
+				init_vector(&pos, helper_models->cubes.positions[model_index].x, pos.y, helper_models->cubes.positions[model_index].z);
+			}
+			else if(along_z) {
+				init_vector(&pos, helper_models->cubes.positions[model_index].x, helper_models->cubes.positions[model_index].y, pos.z);
+			}
+	
+			translate_instanced_helper_model(&helper_models->cubes, model_index, pos.x, pos.y, pos.z);
+		}
+
+	}
+}
+
+void handle_mouse_movement_helper_models(HelperModels *helper_models, InstancedModel *instanced_model, Vector *ray) {
+	if(helper_models->active_helper_model_index != -1) {
+		if(helper_models->active_helper_model_index == 4)
+			move_helper_models_along(helper_models, helper_models->active_helper_model_index, ray, 1, 0, 0);
+		else if(helper_models->active_helper_model_index == 5)
+			move_helper_models_along(helper_models, helper_models->active_helper_model_index, ray, 0, 1, 0);
+		else if(helper_models->active_helper_model_index == 6)
+			move_helper_models_along(helper_models, helper_models->active_helper_model_index, ray, 0, 0, 1);
+
+		BoundingBox *ib = &instanced_model->bounding_boxes[helper_models->active_instanced_model_index];
+		Vector3 *ip = &instanced_model->positions[helper_models->active_instanced_model_index];
+		Vector3 *hp = &helper_models->cubes.positions[helper_models->active_helper_model_index];
+
+		/* Moving instanced model */
+		Vector3 new_pos;
+		if(helper_models->active_helper_model_index == 4)
+			init_vector(&new_pos, hp->x - ib->width / 2.0f - 0.8f, ip->y, ip->z);
+		else if(helper_models->active_helper_model_index == 5)
+			init_vector(&new_pos, ip->x, hp->y - ib->height / 2.0f - 0.8f, ip->z);
+		else if(helper_models->active_helper_model_index == 6)
+			init_vector(&new_pos, ip->x, ip->y, hp->z - ib->depth / 2.0f - 0.8f);
+		
+		translate_instanced_model(instanced_model, helper_models->active_instanced_model_index, new_pos.x, new_pos.y, new_pos.z);
+		/* Moving instanced model */
+
+		/* Moving the other two move sticks */
+		float move_stick_x_pos = ip->x + instanced_model->bounding_boxes[helper_models->active_instanced_model_index].width / 2.0f + 0.8f;
+		float move_stick_y_pos = ip->y + instanced_model->bounding_boxes[helper_models->active_instanced_model_index].height / 2.0f + 0.8f;
+		float move_stick_z_pos = ip->z + instanced_model->bounding_boxes[helper_models->active_instanced_model_index].depth / 2.0f + 0.8f;
+
+		if(helper_models->active_helper_model_index == 4) {
+			translate_instanced_helper_model(&helper_models->cubes, 5, ip->x, move_stick_y_pos, ip->z);
+			translate_instanced_helper_model(&helper_models->cubes, 6, ip->x, ip->y, move_stick_z_pos);
+		}
+		else if(helper_models->active_helper_model_index == 5) {
+			translate_instanced_helper_model(&helper_models->cubes, 4, move_stick_x_pos, ip->y, ip->z);
+			translate_instanced_helper_model(&helper_models->cubes, 6, ip->x, ip->y, move_stick_z_pos);
+		}
+		else if(helper_models->active_helper_model_index == 6) {
+			translate_instanced_helper_model(&helper_models->cubes, 4, move_stick_x_pos, ip->y, ip->z);
+			translate_instanced_helper_model(&helper_models->cubes, 5, ip->x, move_stick_y_pos, ip->z);
+		}
+		/* Moving the other two move sticks */
+	}
 }
 
 void handle_mouse_click_helper_models(HelperModels *helper_models, Vector *ray) {
 	uint32_t hit_index = obb(helper_models->cubes.models, helper_models->cubes.positions, helper_models->cubes.num_models, helper_models->cubes.bounding_boxes, ray);
 
-	/* @TEST */
 	if(hit_index != -1) {
-		set_color_instanced_helper_model(&helper_models->cubes, hit_index, 1, 1, 1);
+		if(helper_models->active_helper_model_index != -1) {
+			Vector3 dc = { helper_models->default_colors[helper_models->active_helper_model_index].x, helper_models->default_colors[helper_models->active_helper_model_index].y, helper_models->default_colors[helper_models->active_helper_model_index].z };
+			set_color_instanced_helper_model(&helper_models->cubes, helper_models->active_helper_model_index, dc.x, dc.y, dc.z);
+		}
+		if(hit_index >= 4 && hit_index <= 6) {
+			set_color_instanced_helper_model(&helper_models->cubes, hit_index, 1, 1, 1);
+			helper_models->active_helper_model_index = hit_index;
+		}
+	}
+	else if(helper_models->active_helper_model_index != -1) {
+		Vector3 dc = { helper_models->default_colors[helper_models->active_helper_model_index].x, helper_models->default_colors[helper_models->active_helper_model_index].y, helper_models->default_colors[helper_models->active_helper_model_index].z };
+		set_color_instanced_helper_model(&helper_models->cubes, helper_models->active_helper_model_index, dc.x, dc.y, dc.z);
+		helper_models->active_helper_model_index = -1;
 	}
 }
 

@@ -31,12 +31,17 @@ void translate_instanced_helper_model(InstancedHelperModel *instanced_helper_mod
 void set_color_instanced_helper_model(InstancedHelperModel *instanced_helper_model, uint32_t model_index, float r, float g, float b);
 
 typedef struct HelperModels {
-	InstancedHelperModel cubes;	
+	InstancedHelperModel cubes;
+	Vector3 default_colors[MAX_INSTANCED_HELPER_MODELS];
 	uint8_t show_move_sticks;
+	int32_t active_helper_model_index;
+	int32_t active_instanced_model_index;
 } HelperModels;
 
 void init_helper_models(HelperModels *helper_models, GLuint instanced_helper_program);
 void set_move_sticks(HelperModels *helper_models, InstancedModel *instanced_model, uint32_t model_index);
+void handle_mouse_movement_helper_models(HelperModels *helper_models, InstancedModel *instanced_model, Vector *ray);
+void move_helper_models_along(HelperModels *helper_models, uint32_t model_index, Vector *ray, uint8_t along_x, uint8_t along_y, uint8_t along_z);
 void draw_helper_models(HelperModels *helper_models, InstancedDirLight *instanced_dir_light);
 void handle_mouse_click_helper_models(HelperModels *helper_models, Vector *ray);
 

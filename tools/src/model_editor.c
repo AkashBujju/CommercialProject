@@ -20,6 +20,7 @@ static float last_x, last_y;
 static float camera_speed = 0.25f;
 static float zoom_speed = 1.0f;
 static uint8_t enable_cursor;
+static uint8_t enable_mouse_rotation;
 const char* assets_path = "../../data/";
 const char* shaders_path = "../../shaders/";
 const char* tmp_models_path = "../data_out/";
@@ -47,10 +48,9 @@ ModelPropertiesGUI model_properties_gui;
 int main() {
 	GLFWwindow *window = init_gl_and_window("Model Editor", &window_width, &window_height, 1);
 	load();
-	enable_cursor = 1;
 
-	load_instanced_model(&instanced_model, instanced_program, "move_stick", combine_string(tmp_models_path, "person_try.model"));
-	add_model(&instanced_model, 0, 0, 0, "pearl");
+	load_instanced_model(&instanced_model, instanced_program, "move_stick", combine_string(tmp_models_path, "ico_sphere.model"));
+	add_model(&instanced_model, 0, 0, 0, "gold");
 	translate_instanced_model(&instanced_model, 0, 3, 3, -3);
 	scale_instanced_model(&instanced_model, 0, 0.5f, 0.5f, 0.5f);
 
@@ -58,9 +58,11 @@ int main() {
 	set_move_sticks(&helper_models, &instanced_model, 0);
 
 	InstancedDirLight instanced_dir_light;
-	load_instanced_dir_light(&instanced_dir_light, dir_light_program, combine_string(tmp_models_path, "cube_1.model"), 1);
+	load_instanced_dir_light(&instanced_dir_light, dir_light_program, combine_string(tmp_models_path, "cube_1.model"), 2);
 	translate_instanced_dir_light(&instanced_dir_light, 0, 3, 0, 3);
 	scale_instanced_dir_light(&instanced_dir_light, 0, 0.1f, 0.1f, 0.1f);
+	translate_instanced_dir_light(&instanced_dir_light, 1, -3, 0, 3);
+	scale_instanced_dir_light(&instanced_dir_light, 1, 0.1f, 0.1f, 0.1f);
 
 	InstancedSpotLight instanced_spot_light;
 	load_instanced_spot_light(&instanced_spot_light, spot_light_program, combine_string(tmp_models_path, "cube_1.model"), 0);
@@ -91,6 +93,9 @@ int main() {
 	init_model_properties_gui(&model_properties_gui, &georgia_bold_12, &georgia_bold_16, &georgia_bold_20);
 
 	while (!glfwWindowShouldClose(window)) {
+		/* @TODO: Is there an other way to do this? */
+		enable_mouse_rotation = 0;
+
 		float current_time = glfwGetTime();
 		process_input(window);
 
@@ -123,8 +128,6 @@ int main() {
 		draw_instanced_dir_light(&instanced_dir_light);
 		draw_instanced_spot_light(&instanced_spot_light);
 
-		draw_helper_models(&helper_models, &instanced_dir_light);
-
 		handle_transition_gui(&model_loader_gui, 1, 0);
 		draw_model_loader_gui(&model_loader_gui, current_time);
 
@@ -134,7 +137,12 @@ int main() {
 		Vector2 norm_mouse_pos;
 		norm_mouse_pos.x = f_normalize(x_pos, 0, window_width, -1, +1);
 		norm_mouse_pos.y = f_normalize(y_pos, 0, window_height, +1, -1);
+		Vector3 norm = normalize_to(x_pos, y_pos, window_width, window_height);
+		Vector ray = compute_mouse_ray_2(norm.x, norm.y, &view, &projection);
 		/* @Note: Change this in the future */
+
+		handle_mouse_movement_helper_models(&helper_models, &instanced_model, &ray);
+		draw_helper_models(&helper_models, &instanced_dir_light);
 
 		translate_move_tag_and_update_properties_gui(&model_properties_gui, norm_mouse_pos.x, norm_mouse_pos.y);
 		draw_model_properties_gui(&model_properties_gui, current_time);
@@ -159,12 +167,6 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 		handle_key_input_gui(&model_loader_gui, key);
 	if(key == GLFW_KEY_TAB && action == GLFW_PRESS) {
 		model_loader_gui.trn.activate = 1;
-		enable_cursor = !enable_cursor;
-
-		if(enable_cursor)
-			glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-		else
-			glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 	}
 }
 
@@ -176,8 +178,6 @@ void process_input(GLFWwindow *window) {
 	if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
 		glfwSetWindowShouldClose(window, 1);
 	}
-	if(enable_cursor)
-		return;
 
 	/*
 	if(glfwGetKey(window, GLFW_KEY_Z) == GLFW_PRESS) {
@@ -186,34 +186,47 @@ void process_input(GLFWwindow *window) {
 	}
 	*/
 
-	if(glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
-		Vector3 res = cross(&front, &up);
-		normalize_vector(&res);
-		position.x -= camera_speed * res.x;
-		position.y -= camera_speed * res.y;
-		position.z -= camera_speed * res.z;
+	if(glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) {
+		enable_mouse_rotation = 1;
+		enable_cursor = 0;
+
+		if(glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
+			Vector3 res = cross(&front, &up);
+			normalize_vector(&res);
+			position.x -= camera_speed * res.x;
+			position.y -= camera_speed * res.y;
+			position.z -= camera_speed * res.z;
+		}
+		if(glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
+			Vector3 res = cross(&front, &up);
+			normalize_vector(&res);
+			position.x += camera_speed * res.x;
+			position.y += camera_speed * res.y;
+			position.z += camera_speed * res.z;
+		}
+		if(glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
+			Vector3 _1 = cross(&front, &up);
+			Vector3 res = cross(&_1, &up);
+			position.x -= camera_speed * res.x;
+			position.y -= camera_speed * res.y;
+			position.z -= camera_speed * res.z;
+		}
+		if(glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
+			Vector3 _1 = cross(&front, &up);
+			Vector3 res = cross(&_1, &up);
+			position.x += camera_speed * res.x;
+			position.y += camera_speed * res.y;
+			position.z += camera_speed * res.z;
+		}
 	}
-	if(glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
-		Vector3 res = cross(&front, &up);
-		normalize_vector(&res);
-		position.x += camera_speed * res.x;
-		position.y += camera_speed * res.y;
-		position.z += camera_speed * res.z;
+	else {
+		enable_cursor = 1;
 	}
-	if(glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
-		Vector3 _1 = cross(&front, &up);
-		Vector3 res = cross(&_1, &up);
-		position.x -= camera_speed * res.x;
-		position.y -= camera_speed * res.y;
-		position.z -= camera_speed * res.z;
-	}
-	if(glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
-		Vector3 _1 = cross(&front, &up);
-		Vector3 res = cross(&_1, &up);
-		position.x += camera_speed * res.x;
-		position.y += camera_speed * res.y;
-		position.z += camera_speed * res.z;
-	}
+
+	if(enable_cursor)
+		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+	else
+		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 }
 
 GLFWwindow* init_gl_and_window(const char *title, uint16_t *window_width, uint16_t *window_height, uint8_t maximize_window) {
@@ -224,7 +237,8 @@ GLFWwindow* init_gl_and_window(const char *title, uint16_t *window_width, uint16
 #ifdef __APPLE__
 	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #endif
-	glfwWindowHint(GLFW_SAMPLES, 1); /* @Note: Is this even having any effect */
+	/* @TODO: The number of samples does consume more than usual memory. We should have an in-game option to change it */
+	glfwWindowHint(GLFW_SAMPLES, 16); /* @Note: Is this even having any effect */
 
 	GLFWmonitor *monitor = glfwGetPrimaryMonitor();
 	const GLFWvidmode *video_mode = glfwGetVideoMode(monitor);
@@ -316,25 +330,24 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
 	last_x = xpos;
 	last_y = ypos;
 
-	if(enable_cursor)
-		return;
+	if(enable_mouse_rotation) {
+		float sensitivity = 0.1f;
+		xoffset *= sensitivity;
+		yoffset *= sensitivity;
 
-	float sensitivity = 0.1f;
-	xoffset *= sensitivity;
-	yoffset *= sensitivity;
+		yaw += xoffset;
+		pitch += yoffset;
 
-	yaw += xoffset;
-	pitch += yoffset;
+		if (pitch > 89.0f)
+			pitch = 89.0f;
+		if (pitch < -89.0f)
+			pitch = -89.0f;
 
-	if (pitch > 89.0f)
-		pitch = 89.0f;
-	if (pitch < -89.0f)
-		pitch = -89.0f;
-
-	front.x = cos(to_radians(yaw)) * cos(to_radians(pitch));
-	front.y = sin(to_radians(pitch));
-	front.z = sin(to_radians(yaw)) * cos(to_radians(pitch));
-	normalize_vector(&front);
+		front.x = cos(to_radians(yaw)) * cos(to_radians(pitch));
+		front.y = sin(to_radians(pitch));
+		front.z = sin(to_radians(yaw)) * cos(to_radians(pitch));
+		normalize_vector(&front);
+	}
 }
 
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
