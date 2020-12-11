@@ -22,6 +22,7 @@ typedef struct InstancedModel {
 	Vector3 positions[MAX_INSTANCED_MODELS];
 	Vector3 scales[MAX_INSTANCED_MODELS];
 	BoundingBox bounding_boxes[MAX_INSTANCED_MODELS];
+	BoundingBox default_boxes[MAX_INSTANCED_MODELS];
 	Vector3 rotation_axes[MAX_INSTANCED_MODELS];
 	Vector3 ambient[MAX_INSTANCED_MODELS];
 	Vector3 diffuse[MAX_INSTANCED_MODELS];

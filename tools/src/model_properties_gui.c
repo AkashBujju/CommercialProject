@@ -7,6 +7,7 @@ extern GLuint button_texture;
 extern GLuint ht_button_texture;
 extern GLuint close_button_texture;
 extern GLuint move_tag_texture;
+extern GLuint check_texture;
 
 void init_model_properties_gui(ModelPropertiesGUI *model_properties_gui, Font *small_font, Font *medium_font, Font *big_font) {
 	model_properties_gui->show = 0;
@@ -45,6 +46,26 @@ void init_model_properties_gui(ModelPropertiesGUI *model_properties_gui, Font *s
 	init_text(&model_properties_gui->model_location_text, medium_font, "na", 0, 0, 1, 1, 0);
 	set_text_position(&model_properties_gui->model_location_text, model_properties_gui->background.position.x - (model_properties_gui->background.dimensions.x / 2.0f) * 0.9f, model_properties_gui->background.position.y + (model_properties_gui->background.dimensions.y / 2.0f) * 0.30f);
 	/* Model location */
+
+	/* Check location indicator */
+	init_text(&model_properties_gui->check_location_indicator_text, small_font, "translate", 0, 0, 1, 1, 0);
+	set_text_position(&model_properties_gui->check_location_indicator_text, model_properties_gui->background.position.x - (model_properties_gui->background.dimensions.x / 2.0f) * 0.9f, model_properties_gui->background.position.y + (model_properties_gui->background.dimensions.y / 2.0f) * 0.1f);
+	/* Check location indicator */
+
+	/* Check translation */
+	init_checkbox(&model_properties_gui->check_translation, rectangle_program, ht_button_texture, check_texture, 0.04f, 0.06f);
+	translate_checkbox(&model_properties_gui->check_translation, model_properties_gui->background.position.x - (model_properties_gui->background.dimensions.x / 2.0f) * 0.9f + model_properties_gui->check_translation.box.dimensions.x / 2.0f, model_properties_gui->background.position.y - (model_properties_gui->background.dimensions.y / 2.0f) * 0.05f);
+	/* Check translation */
+
+	/* Check scale indicator */
+	init_text(&model_properties_gui->check_scale_indicator_text, small_font, "scale", 0, 0, 1, 1, 0);
+	set_text_position(&model_properties_gui->check_scale_indicator_text, model_properties_gui->background.position.x - (model_properties_gui->background.dimensions.x / 2.0f) * 0.5f, model_properties_gui->background.position.y + (model_properties_gui->background.dimensions.y / 2.0f) * 0.1f);
+	/* Check scale indicator */
+
+	/* Check scale */
+	init_checkbox(&model_properties_gui->check_scale, rectangle_program, ht_button_texture, check_texture, 0.04f, 0.06f);
+	translate_checkbox(&model_properties_gui->check_scale, model_properties_gui->background.position.x - (model_properties_gui->background.dimensions.x / 2.0f) * 0.5f + model_properties_gui->check_scale.box.dimensions.x / 2.0f, model_properties_gui->background.position.y - (model_properties_gui->background.dimensions.y / 2.0f) * 0.05f);
+	/* Check scale */
 }
 
 static void update_model_properties_location_text(ModelPropertiesGUI *model_properties_gui, float norm_x, float norm_y, float norm_z) {
@@ -86,7 +107,6 @@ void set_instanced_model_info_to_properties_gui(ModelPropertiesGUI *model_proper
 	/* Model location */
 	update_model_properties_location_text(model_properties_gui, instanced_model->positions[model_index].x, instanced_model->positions[model_index].y, instanced_model->positions[model_index].z);
 	/* Model location */
-
 }
 
 void translate_move_tag_and_update_properties_gui(ModelPropertiesGUI *model_properties_gui, float norm_x, float norm_y) {
@@ -98,6 +118,10 @@ void translate_move_tag_and_update_properties_gui(ModelPropertiesGUI *model_prop
 		set_text_position(&model_properties_gui->model_index_text, model_properties_gui->background.position.x - (model_properties_gui->model_index_text.normalized_dims.x / 2.0f), model_properties_gui->background.position.y + (model_properties_gui->background.dimensions.y / 2.0f) * 0.7f);
 		set_text_position(&model_properties_gui->model_location_indicator_text, model_properties_gui->background.position.x - (model_properties_gui->background.dimensions.x / 2.0f) * 0.9f, model_properties_gui->background.position.y + (model_properties_gui->background.dimensions.y / 2.0f) * 0.45f);
 		set_text_position(&model_properties_gui->model_location_text, model_properties_gui->background.position.x - (model_properties_gui->background.dimensions.x / 2.0f) * 0.9f, model_properties_gui->background.position.y + (model_properties_gui->background.dimensions.y / 2.0f) * 0.30f);
+		set_text_position(&model_properties_gui->check_location_indicator_text, model_properties_gui->background.position.x - (model_properties_gui->background.dimensions.x / 2.0f) * 0.9f, model_properties_gui->background.position.y + (model_properties_gui->background.dimensions.y / 2.0f) * 0.1f);
+		translate_checkbox(&model_properties_gui->check_translation, model_properties_gui->background.position.x - (model_properties_gui->background.dimensions.x / 2.0f) * 0.9f + model_properties_gui->check_translation.box.dimensions.x / 2.0f, model_properties_gui->background.position.y - (model_properties_gui->background.dimensions.y / 2.0f) * 0.05f);
+		set_text_position(&model_properties_gui->check_scale_indicator_text, model_properties_gui->background.position.x - (model_properties_gui->background.dimensions.x / 2.0f) * 0.5f, model_properties_gui->background.position.y + (model_properties_gui->background.dimensions.y / 2.0f) * 0.1f);
+		translate_checkbox(&model_properties_gui->check_scale, model_properties_gui->background.position.x - (model_properties_gui->background.dimensions.x / 2.0f) * 0.5f + model_properties_gui->check_scale.box.dimensions.x / 2.0f, model_properties_gui->background.position.y - (model_properties_gui->background.dimensions.y / 2.0f) * 0.05f);
 	}
 }
 
@@ -112,6 +136,13 @@ void handle_mouse_movement_properties_gui(ModelPropertiesGUI *model_properties_g
 void handle_mouse_click_properties_gui(ModelPropertiesGUI *model_properties_gui, Vector2 *mouse_norm_pos) {
 	if(model_properties_gui->show) {
 		button_clicked(&model_properties_gui->close_button, mouse_norm_pos);
+		uint8_t hit_trans = checkbox_clicked(&model_properties_gui->check_translation, mouse_norm_pos);
+		uint8_t hit_scale = checkbox_clicked(&model_properties_gui->check_scale, mouse_norm_pos);
+
+		if(hit_trans)
+			model_properties_gui->check_scale.checked = 0;
+		else if(hit_scale)
+			model_properties_gui->check_translation.checked = 0;
 	}
 }
 
@@ -121,6 +152,10 @@ void draw_model_properties_gui(ModelPropertiesGUI *model_properties_gui, float c
 		show_text(&model_properties_gui->model_index_text, text_program);
 		show_text(&model_properties_gui->model_location_text, text_program);
 		show_text(&model_properties_gui->model_location_indicator_text, text_program);
+		show_text(&model_properties_gui->check_location_indicator_text, text_program);
+		show_text(&model_properties_gui->check_scale_indicator_text, text_program);
+		draw_checkbox(&model_properties_gui->check_translation);
+		draw_checkbox(&model_properties_gui->check_scale);
 		draw_button(&model_properties_gui->close_button, text_program, current_time);
 		draw_rectangle_2d(&model_properties_gui->background);
 		draw_rectangle_2d(&model_properties_gui->move_tag);

@@ -52,6 +52,9 @@ void load_instanced_model(InstancedModel *instanced_model, GLuint program, char*
 			instanced_model->bounding_boxes[i].width = model_width;
 			instanced_model->bounding_boxes[i].height = model_height;
 			instanced_model->bounding_boxes[i].depth = model_depth;
+			instanced_model->default_boxes[i].width = model_width;
+			instanced_model->default_boxes[i].height = model_height;
+			instanced_model->default_boxes[i].depth = model_depth;
 		 	instanced_model->angle_in_degree[i] = 0;
 		 	instanced_model->shininess[i] = 32;
 		 	init_vector(&instanced_model->ambient[i], 0.5f, 0.5f, 0.5f);
@@ -211,42 +214,23 @@ void move_instanced_model_along(InstancedModel *instanced_model, uint32_t model_
 	}
 }
 
-void scale_instanced_model_along(InstancedModel *instanced_model, uint32_t model_index, Vector *ray, uint8_t along_x, uint8_t along_y, uint8_t along_z) {
-	if(model_index >= instanced_model->num_models) {
-		printf("WARNING: In scale_instanced_model_along(): model_index(%u) >= num_models(%u)\n", model_index, instanced_model->num_models);
-	}
-	else {
-		Vector3 pos;
-		uint8_t valid = get_position_along_axis(&instanced_model->positions[model_index], &pos, ray, along_x, along_y, along_z);
-
-		if(valid) {
-			if(along_x) {
-				float dist_from_model_to_pos = fabs(pos.x - instanced_model->positions[model_index].x);
-				instanced_model->scales[model_index].x = dist_from_model_to_pos;
-			}
-			else if(along_y) {
-				float dist_from_model_to_pos = fabs(pos.y - instanced_model->positions[model_index].y);
-				instanced_model->scales[model_index].y = dist_from_model_to_pos;
-			}
-			else if(along_z) {
-				float dist_from_model_to_pos = fabs(pos.z - instanced_model->positions[model_index].z);
-				instanced_model->scales[model_index].z = dist_from_model_to_pos;
-			}
-		}
-	}
-}
-
 void scale_instanced_model(InstancedModel *instanced_model, uint32_t model_index, float x, float y, float z) {
 	if(model_index >= instanced_model->num_models) {
 		printf("WARNING: In scale_instanced_model(): model_index(%u) >= num_models(%u)\n", model_index, instanced_model->num_models);
 	}
 	else {
-		instanced_model->scales[model_index].x *= x;
-		instanced_model->scales[model_index].y *= y;
-		instanced_model->scales[model_index].z *= z;
-		instanced_model->bounding_boxes[model_index].width *= x;
-		instanced_model->bounding_boxes[model_index].height *= y;
-		instanced_model->bounding_boxes[model_index].depth *= z;
+		if(x != 0) {
+			instanced_model->scales[model_index].x = x;
+			instanced_model->bounding_boxes[model_index].width = instanced_model->default_boxes[model_index].width * x;
+		}
+		if(y != 0) {
+			instanced_model->scales[model_index].y = y;
+			instanced_model->bounding_boxes[model_index].height = instanced_model->default_boxes[model_index].height * y;
+		}
+		if(z != 0) {
+			instanced_model->scales[model_index].z = z;
+			instanced_model->bounding_boxes[model_index].depth = instanced_model->default_boxes[model_index].depth * z;
+		}
 	}
 }
 

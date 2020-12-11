@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 
 extern char* assets_path;
 extern char* tmp_models_path;
@@ -260,12 +261,15 @@ void init_helper_models(HelperModels *helper_models, GLuint instanced_helper_pro
 	/* Move sticks */
 	add_helper_model(&helper_models->cubes, 0, 0, 0);
 	set_color_instanced_helper_model(&helper_models->cubes, 4, 0, 0, 1);
+	scale_instanced_helper_model(&helper_models->cubes, 4, 0.3f, 0.05f, 0.05f);
 
 	add_helper_model(&helper_models->cubes, 0, 0, 0);
 	set_color_instanced_helper_model(&helper_models->cubes, 5, 1, 0, 0);
+	scale_instanced_helper_model(&helper_models->cubes, 5, 0.3f, 0.05f, 0.05f);
 
 	add_helper_model(&helper_models->cubes, 0, 0, 0);
 	set_color_instanced_helper_model(&helper_models->cubes, 6, 0, 1, 0);
+	scale_instanced_helper_model(&helper_models->cubes, 6, 0.3f, 0.05f, 0.05f);
 	/* Move sticks */
 
 	/* Setting default colors */
@@ -288,15 +292,12 @@ void set_move_sticks(HelperModels *helper_models, InstancedModel *instanced_mode
 	float move_stick_z_pos = model_pos.z + instanced_model->bounding_boxes[model_index].depth / 2.0f + 0.8f;
 
 	translate_instanced_helper_model(&helper_models->cubes, 4, move_stick_x_pos, model_pos.y, model_pos.z);
-	scale_instanced_helper_model(&helper_models->cubes, 4, 0.3f, 0.05f, 0.05f);
 
 	translate_instanced_helper_model(&helper_models->cubes, 5, model_pos.x, move_stick_y_pos, model_pos.z);
 	rotate_instanced_helper_model(&helper_models->cubes, 5, 0, 0, 1, 90);
-	scale_instanced_helper_model(&helper_models->cubes, 5, 0.3f, 0.05f, 0.05f);
 
 	translate_instanced_helper_model(&helper_models->cubes, 6, model_pos.x, model_pos.y, move_stick_z_pos);
 	rotate_instanced_helper_model(&helper_models->cubes, 6, 0, 1, 0, 90);
-	scale_instanced_helper_model(&helper_models->cubes, 6, 0.3f, 0.05f, 0.05f);
 }
 
 void move_helper_models_along(HelperModels *helper_models, uint32_t model_index, Vector *ray, uint8_t along_x, uint8_t along_y, uint8_t along_z) {
@@ -320,11 +321,48 @@ void move_helper_models_along(HelperModels *helper_models, uint32_t model_index,
 	
 			translate_instanced_helper_model(&helper_models->cubes, model_index, pos.x, pos.y, pos.z);
 		}
-
 	}
 }
 
-void handle_mouse_movement_helper_models(HelperModels *helper_models, InstancedModel *instanced_model, Vector *ray) {
+static void scale_instanced_model_using_movesticks(HelperModels *helper_models, InstancedModel *instanced_model, Vector *ray) {
+	if(helper_models->active_helper_model_index != -1) {
+		if(helper_models->active_helper_model_index == 4)
+			move_helper_models_along(helper_models, helper_models->active_helper_model_index, ray, 1, 0, 0);
+		else if(helper_models->active_helper_model_index == 5)
+			move_helper_models_along(helper_models, helper_models->active_helper_model_index, ray, 0, 1, 0);
+		else if(helper_models->active_helper_model_index == 6)
+			move_helper_models_along(helper_models, helper_models->active_helper_model_index, ray, 0, 0, 1);
+
+		BoundingBox *hb = &helper_models->cubes.bounding_boxes[helper_models->active_helper_model_index];
+		Vector3 *ip = &instanced_model->positions[helper_models->active_instanced_model_index];
+		Vector3 *hp = &helper_models->cubes.positions[helper_models->active_helper_model_index];
+
+		/* @Note: Here we are taking hb->width for all three dimensions because in all three movesticks only the width has been
+		 * scaled and the model rotated to y and z axes */
+		Vector3 new_pos;
+		if(helper_models->active_helper_model_index == 4)
+			init_vector(&new_pos, hp->x - hb->width / 2.0f - 0.2f, ip->y, ip->z);
+		else if(helper_models->active_helper_model_index == 5)
+			init_vector(&new_pos, ip->x, hp->y - hb->width / 2.0f - 0.2f, ip->z);
+		else if(helper_models->active_helper_model_index == 6)
+			init_vector(&new_pos, ip->x, ip->y, hp->z - hb->width / 2.0f - 0.2f);
+
+		Vector3 new_scale = { 0, 0, 0 };
+		if(helper_models->active_helper_model_index == 4) {
+			new_scale.x = (2 * fabs(new_pos.x - instanced_model->positions[helper_models->active_instanced_model_index].x)) / instanced_model->default_boxes[helper_models->active_instanced_model_index].width;
+		}
+		else if(helper_models->active_helper_model_index == 5) {
+			new_scale.y = (2 * fabs(new_pos.y - instanced_model->positions[helper_models->active_instanced_model_index].y)) / instanced_model->default_boxes[helper_models->active_instanced_model_index].height;
+		}
+		else if(helper_models->active_helper_model_index == 6) {
+			new_scale.z = (2 * fabs(new_pos.z - instanced_model->positions[helper_models->active_instanced_model_index].z)) / instanced_model->default_boxes[helper_models->active_instanced_model_index].depth;
+		}
+	
+		scale_instanced_model(instanced_model, helper_models->active_instanced_model_index, new_scale.x, new_scale.y, new_scale.z);
+	}
+}
+
+static void translate_instanced_model_using_movesticks(HelperModels *helper_models, InstancedModel *instanced_model, Vector *ray) {
 	if(helper_models->active_helper_model_index != -1) {
 		if(helper_models->active_helper_model_index == 4)
 			move_helper_models_along(helper_models, helper_models->active_helper_model_index, ray, 1, 0, 0);
@@ -368,6 +406,13 @@ void handle_mouse_movement_helper_models(HelperModels *helper_models, InstancedM
 		}
 		/* Moving the other two move sticks */
 	}
+}
+
+void handle_mouse_movement_helper_models(HelperModels *helper_models, InstancedModel *instanced_model, ModelPropertiesGUI *model_properties_gui, Vector *ray) {
+	if(model_properties_gui->check_translation.checked)
+		translate_instanced_model_using_movesticks(helper_models, instanced_model, ray);
+	else if(model_properties_gui->check_scale.checked)
+		scale_instanced_model_using_movesticks(helper_models, instanced_model, ray);
 }
 
 void handle_mouse_click_helper_models(HelperModels *helper_models, Vector *ray) {

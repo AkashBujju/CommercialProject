@@ -6,6 +6,7 @@
 #include "text_box.h"
 #include "button.h"
 #include "text.h"
+#include "check_box.h"
 
 typedef struct ModelPropertiesGUI {
 	Rectangle2D background;
@@ -14,6 +15,10 @@ typedef struct ModelPropertiesGUI {
 	Text model_index_text;
 	Text model_location_indicator_text;
 	Text model_location_text;
+	Text check_location_indicator_text;
+	Text check_scale_indicator_text;
+	CheckBox check_translation;
+	CheckBox check_scale;
 	Button close_button;
 
 	uint8_t show;

@@ -14,6 +14,7 @@ TEXTURE button_texture png/button_box.png
 TEXTURE ht_button_texture png/button_box_ht.png
 TEXTURE close_button_texture png/close_button.png
 TEXTURE move_tag_texture png/move_tag.png
+TEXTURE check_texture png/check.png
 
 FONT consolas 14 fonts/consolas.ttf
 FONT georgia_bold_12 12 fonts/georgia_bold.ttf

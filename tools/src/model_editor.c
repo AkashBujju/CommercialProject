@@ -37,7 +37,7 @@ void character_callback(GLFWwindow*, unsigned int);
 uint16_t window_width, window_height;
 Matrix4 view, projection, text_projection;
 GLuint rectangle_program, text_program, instanced_program, dir_light_program, spot_light_program, instanced_helper_program;
-GLuint background_left_texture, box_texture, ht_box_texture, button_texture, ht_button_texture, cursor_texture, model_properties_background_texture, close_button_texture, move_tag_texture;
+GLuint background_left_texture, box_texture, ht_box_texture, button_texture, ht_button_texture, cursor_texture, model_properties_background_texture, close_button_texture, move_tag_texture, check_texture;
 
 InstancedModel instanced_model;
 HelperModels helper_models;
@@ -49,13 +49,9 @@ int main() {
 	GLFWwindow *window = init_gl_and_window("Model Editor", &window_width, &window_height, 1);
 	load();
 
-	load_instanced_model(&instanced_model, instanced_program, "move_stick", combine_string(tmp_models_path, "ico_sphere.model"));
-	add_model(&instanced_model, 0, 0, 0, "gold");
-	translate_instanced_model(&instanced_model, 0, 3, 3, -3);
-	scale_instanced_model(&instanced_model, 0, 0.5f, 0.5f, 0.5f);
+	load_instanced_model(&instanced_model, instanced_program, "torus", combine_string(tmp_models_path, "torus.model"));
 
 	init_helper_models(&helper_models, instanced_helper_program);
-	set_move_sticks(&helper_models, &instanced_model, 0);
 
 	InstancedDirLight instanced_dir_light;
 	load_instanced_dir_light(&instanced_dir_light, dir_light_program, combine_string(tmp_models_path, "cube_1.model"), 2);
@@ -141,7 +137,7 @@ int main() {
 		Vector ray = compute_mouse_ray_2(norm.x, norm.y, &view, &projection);
 		/* @Note: Change this in the future */
 
-		handle_mouse_movement_helper_models(&helper_models, &instanced_model, &ray);
+		handle_mouse_movement_helper_models(&helper_models, &instanced_model, &model_properties_gui, &ray);
 		draw_helper_models(&helper_models, &instanced_dir_light);
 
 		translate_move_tag_and_update_properties_gui(&model_properties_gui, norm_mouse_pos.x, norm_mouse_pos.y);
@@ -287,19 +283,15 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 		Vector3 norm = normalize_to(x_pos, y_pos, window_width, window_height);
 		Vector ray = compute_mouse_ray_2(norm.x, norm.y, &view, &projection);
 
-		/* Test */
-		// scale_instanced_model_along(&instanced_model, 0, &ray, 1, 0, 0);
-		/* Test */
-		
 		uint32_t hit_index = obb(instanced_model.models, instanced_model.positions, instanced_model.num_models, instanced_model.bounding_boxes, &ray);
 
 		if(hit_index != -1) {
 			model_properties_gui.show = 1;
 			set_instanced_model_info_to_properties_gui(&model_properties_gui, &instanced_model, hit_index);
+			set_move_sticks(&helper_models, &instanced_model, hit_index);
 		}
 
 		handle_mouse_click_helper_models(&helper_models, &ray);
-
 		handle_mouse_click_gui(&model_loader_gui, &norm_mouse_pos);
 		handle_mouse_click_properties_gui(&model_properties_gui, &norm_mouse_pos);
 		handle_mouse_movement_properties_gui(&model_properties_gui, &norm_mouse_pos);
@@ -309,12 +301,14 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 		}
 
 		/* @Note: Is this the we to handle this */
-		// if(model_loader_gui.model_load_button.clicked) {
-		// 	char* text = model_loader_gui.model_load_textbox.text.text;
+		if(model_loader_gui.model_load_button.clicked) {
+			char* text = model_loader_gui.model_load_textbox.text.text;
 
-		// 	if(strcmp(text, "person_try") == 0)
-		// 		add_model(&instanced_model, 0, 0, 0, "pearl");
-		// }
+			if(strcmp(text, "hello") == 0) {
+				add_model(&instanced_model, 0, 0, 0, "silver");
+				set_move_sticks(&helper_models, &instanced_model, instanced_model.num_models - 1);
+			}
+		}
 	}
 }
 

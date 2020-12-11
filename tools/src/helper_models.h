@@ -6,6 +6,7 @@
 #include <glad/glad.h>
 #include "../../src/math.h"
 #include "../../src/instanced_model.h"
+#include "model_properties_gui.h"
 
 typedef struct InstancedHelperModel {
 	GLuint program, vao, vbo;
@@ -40,8 +41,9 @@ typedef struct HelperModels {
 
 void init_helper_models(HelperModels *helper_models, GLuint instanced_helper_program);
 void set_move_sticks(HelperModels *helper_models, InstancedModel *instanced_model, uint32_t model_index);
-void handle_mouse_movement_helper_models(HelperModels *helper_models, InstancedModel *instanced_model, Vector *ray);
+void handle_mouse_movement_helper_models(HelperModels *helper_models, InstancedModel *instanced_model, ModelPropertiesGUI *model_properties_gui, Vector *ray);
 void move_helper_models_along(HelperModels *helper_models, uint32_t model_index, Vector *ray, uint8_t along_x, uint8_t along_y, uint8_t along_z);
+static void scale_instanced_model_using_movesticks(HelperModels *helper_models, InstancedModel *instanced_model, Vector *ray);
 void draw_helper_models(HelperModels *helper_models, InstancedDirLight *instanced_dir_light);
 void handle_mouse_click_helper_models(HelperModels *helper_models, Vector *ray);
 

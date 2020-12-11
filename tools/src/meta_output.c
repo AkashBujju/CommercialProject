@@ -29,6 +29,7 @@ extern GLuint button_texture;
 extern GLuint ht_button_texture;
 extern GLuint close_button_texture;
 extern GLuint move_tag_texture;
+extern GLuint check_texture;
 extern Font consolas;
 extern Font georgia_bold_12;
 extern Font georgia_bold_16;
@@ -51,6 +52,7 @@ void load() {
 	ht_button_texture = make_texture(combine_string(assets_path, "png/button_box_ht.png"));
 	close_button_texture = make_texture(combine_string(assets_path, "png/close_button.png"));
 	move_tag_texture = make_texture(combine_string(assets_path, "png/move_tag.png"));
+	check_texture = make_texture(combine_string(assets_path, "png/check.png"));
 
 	FT_Library ft_1;
 	init_freetype(&ft_1);
