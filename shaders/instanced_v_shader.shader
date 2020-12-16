@@ -6,6 +6,7 @@ layout (location = 6) in vec3 aAmbient;
 layout (location = 7) in vec3 aDiffuse;
 layout (location = 8) in vec3 aSpecular;
 layout (location = 9) in float aShininess;
+layout (location = 10) in float aAlpha;
 
 struct Material {
 	vec3 ambient;
@@ -17,6 +18,7 @@ struct Material {
 out vec3 fragPos;
 out vec3 Normal;
 out Material material;
+out float alpha_value;
 
 uniform mat4 view;
 uniform mat4 projection;
@@ -26,6 +28,7 @@ void main() {
 	material.diffuse = aDiffuse;
 	material.specular = aSpecular;
 	material.shininess = aShininess;
+	alpha_value = aAlpha;
 
 	mat4 md;
 	md[0] = aModel[0];

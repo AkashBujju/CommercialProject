@@ -20,6 +20,7 @@ struct SpotLight {
 in vec3 Normal;
 in vec3 fragPos;
 in Material material;
+in float alpha_value;
 
 uniform vec3 viewPos;
 uniform vec3 light_ambient;
@@ -49,7 +50,7 @@ void main() {
 	for(int i = 0; i < num_spot_lights; ++i)
 		result += calculate_spot_light(spot_lights[i], norm, fragPos, viewDir);
 
-	fragColor = vec4(result, 1.0);
+	fragColor = vec4(result, alpha_value);
 }
 
 vec3 calculate_dir_light(DirLight dir_light, vec3 normal, vec3 viewDir) {

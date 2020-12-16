@@ -4,6 +4,7 @@ SHADER instanced_program instanced_v_shader.shader instanced_f_shader.shader
 SHADER instanced_helper_program helper_model.vert helper_model.frag
 SHADER dir_light_program v_dir_light.shader f_dir_light.shader
 SHADER spot_light_program v_spot_light.shader f_spot_light.shader
+SHADER exp_lines_program exp_lines.vert exp_lines.frag
 
 TEXTURE background_left_texture png/test_1.png
 TEXTURE model_properties_background_texture png/model_properties.png

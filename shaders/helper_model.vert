@@ -2,10 +2,10 @@
 layout (location = 0) in vec3 aPos;
 layout (location = 1) in vec3 aNormal;
 layout (location = 2) in vec4 aModel[4];
-layout (location = 6) in vec3 aColor;
+layout (location = 6) in vec4 aColor;
 
 out vec3 fragPos;
-out vec3 objectColor;
+out vec4 objectColor;
 out vec3 Normal;
 
 uniform mat4 view;

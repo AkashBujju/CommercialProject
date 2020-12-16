@@ -47,6 +47,8 @@ void load_instanced_model(InstancedModel *instanced_model, GLuint program, char*
 		 	/* @Note: Change the below to custom values later */
 		 	init_vector(&instanced_model->scales[i], 1, 1, 1);
 		 	init_vector(&instanced_model->positions[i], 0, 0, 0);
+		 	init_vector(&instanced_model->initial_positions[i], 0, 0, 0);
+		 	init_vector(&instanced_model->rotation_points[i], 0, 0, 0);
 			make_identity(&instanced_model->models[i]);
 			/* @Note: Change the width, height and depth to be the bounding of the model */
 			instanced_model->bounding_boxes[i].width = model_width;
@@ -56,11 +58,14 @@ void load_instanced_model(InstancedModel *instanced_model, GLuint program, char*
 			instanced_model->default_boxes[i].height = model_height;
 			instanced_model->default_boxes[i].depth = model_depth;
 		 	instanced_model->angle_in_degree[i] = 0;
+		 	instanced_model->initial_angle_in_degree[i] = 0;
 		 	instanced_model->shininess[i] = 32;
+		 	instanced_model->alpha[i] = 1;
 		 	init_vector(&instanced_model->ambient[i], 0.5f, 0.5f, 0.5f);
 		 	init_vector(&instanced_model->diffuse[i], 0.5f, 0.5f, 0.5f);
 		 	init_vector(&instanced_model->specular[i], 0.5f, 0.5f, 0.5f);
 		 	init_vector(&instanced_model->rotation_axes[i], 0, 0, 0);
+		 	init_vector(&instanced_model->initial_rotation_axes[i], 0, 0, 0);
 		}
 
 		/* Instance VBOs */
@@ -84,6 +89,11 @@ void load_instanced_model(InstancedModel *instanced_model, GLuint program, char*
     	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * MAX_INSTANCED_MODELS, instanced_model->shininess, GL_STATIC_DRAW);
     	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
+		glGenBuffers(1, &instanced_model->instanceAlphaVBO);
+    	glBindBuffer(GL_ARRAY_BUFFER, instanced_model->instanceAlphaVBO);
+    	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * MAX_INSTANCED_MODELS, instanced_model->alpha, GL_STATIC_DRAW);
+    	glBindBuffer(GL_ARRAY_BUFFER, 0);
+
 		glGenBuffers(1, &instanced_model->instanceModelVBO);
     	glBindBuffer(GL_ARRAY_BUFFER, instanced_model->instanceModelVBO);
     	glBufferData(GL_ARRAY_BUFFER, sizeof(Matrix4) * MAX_INSTANCED_MODELS, instanced_model->models, GL_STATIC_DRAW);
@@ -91,10 +101,11 @@ void load_instanced_model(InstancedModel *instanced_model, GLuint program, char*
 		/* Instance VBOs */
 
 		/* Position and Normals */
+		GLuint tmp_vbo;
 		glGenVertexArrays(1, &instanced_model->vao);
-		glGenBuffers(1, &instanced_model->vbo);
+		glGenBuffers(1, &tmp_vbo);
 		glBindVertexArray(instanced_model->vao);
-		glBindBuffer(GL_ARRAY_BUFFER, instanced_model->vbo);
+		glBindBuffer(GL_ARRAY_BUFFER, tmp_vbo);
 		/* @Note: Should we change this to dynamic draw later? */
 		glBufferData(GL_ARRAY_BUFFER, sizeof(float) * num_floats, vertices, GL_STATIC_DRAW);
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_TRUE, 6 * sizeof(float), (void*)0);
@@ -161,6 +172,14 @@ void load_instanced_model(InstancedModel *instanced_model, GLuint program, char*
     	glVertexAttribDivisor(9, 1);
 		/* Instanced Shininess Attrib */
 
+		/* Instanced Shininess Attrib */
+		glEnableVertexAttribArray(10);
+		glBindBuffer(GL_ARRAY_BUFFER, instanced_model->instanceAlphaVBO);
+    	glVertexAttribPointer(10, 1, GL_FLOAT, GL_FALSE, sizeof(float), (void*)0);
+    	glBindBuffer(GL_ARRAY_BUFFER, 0);
+    	glVertexAttribDivisor(10, 1);
+		/* Instanced Shininess Attrib */
+
 		/* @Note: Is this okay at this point?
 		free(vertices); */
 	}
@@ -178,6 +197,17 @@ void add_model(InstancedModel *instanced_model, float x, float y, float z, char 
 	}
 }
 
+void set_initial_pose_instanced_model(InstancedModel *instanced_model, uint32_t model_index, float px, float py, float pz, float axis_x, float axis_y, float axis_z, float angle) {
+	if(model_index >= instanced_model->num_models) {
+		printf("WARNING: In set_initial_pose_instanced_model(): model_index(%u) >= num_models(%u)\n", model_index, instanced_model->num_models);
+	}
+	else {
+		init_vector(&instanced_model->initial_positions[model_index], px, py, pz);
+		init_vector(&instanced_model->initial_rotation_axes[model_index], axis_x, axis_y, axis_z);
+		instanced_model->initial_angle_in_degree[model_index] = angle;
+	}
+}
+
 void translate_instanced_model(InstancedModel *instanced_model, uint32_t model_index, float x, float y, float z) {
 	if(model_index >= instanced_model->num_models) {
 		printf("WARNING: In translate_instanced_model(): model_index(%u) >= num_models(%u)\n", model_index, instanced_model->num_models);
@@ -186,31 +216,6 @@ void translate_instanced_model(InstancedModel *instanced_model, uint32_t model_i
 		instanced_model->positions[model_index].x = x;
 		instanced_model->positions[model_index].y = y;
 		instanced_model->positions[model_index].z = z;
-	}
-}
-
-/* @TODO: For now we move only along one axes at a time */
-void move_instanced_model_along(InstancedModel *instanced_model, uint32_t model_index, Vector *ray, uint8_t along_x, uint8_t along_y, uint8_t along_z) {
-	if(model_index >= instanced_model->num_models) {
-		printf("WARNING: In move_instanced_model_along(): model_index(%u) >= num_models(%u)\n", model_index, instanced_model->num_models);
-	}
-	else {
-		Vector3 pos;
-		uint8_t valid = get_position_along_axis(&instanced_model->positions[model_index], &pos, ray, along_x, along_y, along_z);
-
-		if(valid) {
-			if(along_x) {
-				init_vector(&pos, pos.x, instanced_model->positions[model_index].y, instanced_model->positions[model_index].z);
-			}
-			else if(along_y) {
-				init_vector(&pos, instanced_model->positions[model_index].x, pos.y, instanced_model->positions[model_index].z);
-			}
-			else if(along_z) {
-				init_vector(&pos, instanced_model->positions[model_index].x, instanced_model->positions[model_index].y, pos.z);
-			}
-	
-			translate_instanced_model(instanced_model, model_index, pos.x, pos.y, pos.z);
-		}
 	}
 }
 
@@ -234,9 +239,21 @@ void scale_instanced_model(InstancedModel *instanced_model, uint32_t model_index
 	}
 }
 
+void set_alpha_instanced_model(InstancedModel *instanced_model, uint32_t model_index, float alpha_value) {
+	if(model_index >= instanced_model->num_models) {
+		printf("WARNING: In set_alpha_instanced_model(): model_index(%u) >= num_models(%u)\n", model_index, instanced_model->num_models);
+	}
+	else {
+		instanced_model->alpha[model_index] = alpha_value;
+		glBindBuffer(GL_ARRAY_BUFFER, instanced_model->instanceAlphaVBO);
+		glBufferSubData(GL_ARRAY_BUFFER, sizeof(float) * model_index, sizeof(float), &instanced_model->alpha[model_index]);
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+	}
+}
+
 void set_material_instanced_model(InstancedModel *instanced_model, uint32_t model_index, char* material_name) {
 	if(model_index >= instanced_model->num_models) {
-		printf("WARNING: In set_color_instanced_model(): model_index(%u) >= num_models(%u)\n", model_index, instanced_model->num_models);
+		printf("WARNING: In set_material_instanced_model(): model_index(%u) >= num_models(%u)\n", model_index, instanced_model->num_models);
 	}
 	else {
 		Material material = get_material_info_from_file(combine_string(assets_path, "materials/materials.info"), material_name);
@@ -259,15 +276,16 @@ void set_material_instanced_model(InstancedModel *instanced_model, uint32_t mode
 	}
 }
 
-void rotate_instanced_model(InstancedModel *instanced_model, uint32_t model_index, float x, float y, float z, float degree) {
+void rotate_instanced_model_about(InstancedModel *instanced_model, uint32_t model_index, float axis_x, float axis_y, float axis_z, float about_x, float about_y, float about_z, float degree) {
 	if(model_index >= instanced_model->num_models) {
 		printf("WARNING: In rotate_instanced_model(): model_index(%u) >= num_models(%u)\n", model_index, instanced_model->num_models);
 	}
 	else {
 		instanced_model->angle_in_degree[model_index] = degree;
-		instanced_model->rotation_axes[model_index].x = x;
-		instanced_model->rotation_axes[model_index].y = y;
-		instanced_model->rotation_axes[model_index].z = z;
+		init_vector(&instanced_model->rotation_points[model_index], about_x, about_y, about_z);
+		instanced_model->rotation_axes[model_index].x = axis_x;
+		instanced_model->rotation_axes[model_index].y = axis_y;
+		instanced_model->rotation_axes[model_index].z = axis_z;
 	}
 }
 
@@ -290,6 +308,12 @@ void draw_instanced_model(InstancedModel *instanced_model, InstancedDirLight *in
 	for(uint32_t i = 0; i < instanced_model->num_models; ++i) {
 		make_identity(&instanced_model->models[i]);
 
+		/* Setting initial pose */
+		translate_matrix(&instanced_model->models[i], 0, 0, 0);
+		rotate(&instanced_model->models[i], &instanced_model->initial_rotation_axes[i], instanced_model->initial_angle_in_degree[i]);
+		translate_matrix(&instanced_model->models[i], instanced_model->initial_positions[i].x, instanced_model->initial_positions[i].y, instanced_model->initial_positions[i].z);
+		/* Setting initial pose */
+
 		translate_matrix(&instanced_model->models[i], instanced_model->positions[i].x, instanced_model->positions[i].y, instanced_model->positions[i].z);
 		scale(&instanced_model->models[i], instanced_model->scales[i].x, instanced_model->scales[i].y, instanced_model->scales[i].z);
 		Vector3 tmp_position;
@@ -297,9 +321,11 @@ void draw_instanced_model(InstancedModel *instanced_model, InstancedDirLight *in
 				instanced_model->positions[i].x, 
 				instanced_model->positions[i].y, 
 				instanced_model->positions[i].z);
-		translate_matrix(&instanced_model->models[i], 0, 0, 0);
+		Vector3 *about_point = &instanced_model->rotation_points[i];
+		Vector3 disp = { instanced_model->positions[i].x - about_point->x, instanced_model->positions[i].y - about_point->y, instanced_model->positions[i].z - about_point->z };
+		translateBy_matrix(&instanced_model->models[i], -disp.x, -disp.y, -disp.z);
 		rotate(&instanced_model->models[i], &instanced_model->rotation_axes[i], instanced_model->angle_in_degree[i]);
-		translate_matrix(&instanced_model->models[i], tmp_position.x, tmp_position.y, tmp_position.z);
+		translateBy_matrix(&instanced_model->models[i], +disp.x, +disp.y, +disp.z);
 	}
 	/* Updating in-struct Model Matrix */
 
@@ -329,6 +355,8 @@ void draw_instanced_model(InstancedModel *instanced_model, InstancedDirLight *in
 	}
 	/* Spot Lights */
 
+	glEnable(GL_BLEND);
 	glBindVertexArray(instanced_model->vao);
 	glDrawArraysInstanced(GL_TRIANGLES, 0, instanced_model->num_vertices, instanced_model->num_models);
+	glDisable(GL_BLEND);
 }

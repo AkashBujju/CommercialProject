@@ -1,7 +1,7 @@
 #include "math.h"
 #include <math.h>
 #include <string.h>
-#include <stdio.h> // @Tmp
+#include <stdio.h>
 #include "instanced_model.h"
 
 float f_max(float f1, float f2) {
@@ -91,6 +91,10 @@ void translateBy_matrix(Matrix4 *mat, float x, float y, float z) {
 	m[12] += x;
 	m[13] += y;
 	m[14] += z;
+}
+
+float to_degrees(float radians) {
+	return radians / 0.0174533f;
 }
 
 float to_radians(float degree) {
@@ -680,6 +684,17 @@ int in_plane_point(Box *box, Vector3 *res, Vector3 *ray_start, Vector3* ray_end)
 		return 1;
 
 	return 0;
+}
+
+float magnitude_vector(Vector3 *vec) {
+	return sqrt(vec->x * vec->x + vec->y * vec->y + vec->z * vec->z);
+}
+
+float angle_vectors(Vector3 *vec_1, Vector3 *vec_2) {
+	float mag_a = magnitude_vector(vec_1);
+	float mag_b = magnitude_vector(vec_2);
+	float dp = dot(vec_1, vec_2);
+	return acos(dp / (mag_a * mag_b));
 }
 
 float get_distance(Vector3 *p1, Vector3 *p2) {

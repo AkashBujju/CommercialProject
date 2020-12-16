@@ -5,9 +5,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include "exp_lines.h" /* TMP */
 
 extern char* assets_path;
 extern char* tmp_models_path;
+extern ExpLines exp_lines; /* TMP */
 
 void load_instanced_helper_model(InstancedHelperModel *instanced_helper_model, GLuint program, const char* model_filename) {
 	instanced_helper_model->program = program;
@@ -47,7 +49,7 @@ void load_instanced_helper_model(InstancedHelperModel *instanced_helper_model, G
 		 	/* @Note: Change the below to custom values later */
 		 	init_vector(&instanced_helper_model->scales[i], 1, 1, 1);
 		 	init_vector(&instanced_helper_model->positions[i], 0, 0, 0);
-		 	init_vector(&instanced_helper_model->colors[i], 0.5f, 0.5f, 0.5f);
+		 	init_vector4(&instanced_helper_model->colors[i], 0.5f, 0.5f, 0.5f, 1.0f);
 			instanced_helper_model->bounding_boxes[i].width = model_width;
 			instanced_helper_model->bounding_boxes[i].height = model_height;
 			instanced_helper_model->bounding_boxes[i].depth = model_depth;
@@ -65,7 +67,7 @@ void load_instanced_helper_model(InstancedHelperModel *instanced_helper_model, G
 
 		glGenBuffers(1, &instanced_helper_model->instanceColorVBO);
     	glBindBuffer(GL_ARRAY_BUFFER, instanced_helper_model->instanceColorVBO);
-    	glBufferData(GL_ARRAY_BUFFER, sizeof(Vector3) * MAX_INSTANCED_HELPER_MODELS, instanced_helper_model->colors, GL_STATIC_DRAW);
+    	glBufferData(GL_ARRAY_BUFFER, sizeof(Vector4) * MAX_INSTANCED_HELPER_MODELS, instanced_helper_model->colors, GL_STATIC_DRAW);
     	glBindBuffer(GL_ARRAY_BUFFER, 0);
 		/* Instance VBOs */
 
@@ -111,7 +113,7 @@ void load_instanced_helper_model(InstancedHelperModel *instanced_helper_model, G
 		/* Instanced Colors */
 		glEnableVertexAttribArray(6);
 		glBindBuffer(GL_ARRAY_BUFFER, instanced_helper_model->instanceColorVBO);
-    	glVertexAttribPointer(6, 3, GL_FLOAT, GL_TRUE, 3 * sizeof(float), (void*)0);
+    	glVertexAttribPointer(6, 4, GL_FLOAT, GL_TRUE, 4 * sizeof(float), (void*)0);
     	glBindBuffer(GL_ARRAY_BUFFER, 0);
     	glVertexAttribDivisor(6, 1);
 		/* Instanced Colors */
@@ -129,7 +131,7 @@ void add_helper_model(InstancedHelperModel *instanced_helper_model, float x, flo
 	}
 }
 
-void set_color_instanced_helper_model(InstancedHelperModel *instanced_helper_model, uint32_t model_index, float r, float g, float b) {
+void set_color_instanced_helper_model(InstancedHelperModel *instanced_helper_model, uint32_t model_index, float r, float g, float b, float a) {
 	if(model_index >= instanced_helper_model->num_models) {
 		printf("WARNING: In set_color_instanced_helper_model(): model_index(%u) >= num_models(%u)\n", model_index, instanced_helper_model->num_models);
 	}
@@ -137,9 +139,10 @@ void set_color_instanced_helper_model(InstancedHelperModel *instanced_helper_mod
 		instanced_helper_model->colors[model_index].x = r;
 		instanced_helper_model->colors[model_index].y = g;
 		instanced_helper_model->colors[model_index].z = b;
+		instanced_helper_model->colors[model_index].a = a;
 
 		glBindBuffer(GL_ARRAY_BUFFER, instanced_helper_model->instanceColorVBO);
-		glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(Vector3) * instanced_helper_model->num_models, instanced_helper_model->colors);
+		glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(Vector4) * instanced_helper_model->num_models, instanced_helper_model->colors);
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 	}
 }
@@ -238,37 +241,37 @@ void init_helper_models(HelperModels *helper_models, GLuint instanced_helper_pro
 	/* Origin */
 	load_instanced_helper_model(&helper_models->cubes, instanced_helper_program, combine_string(tmp_models_path, "smooth_cube.model"));
 	add_helper_model(&helper_models->cubes, 0, 0, 0);
-	set_color_instanced_helper_model(&helper_models->cubes, 0, 1, 0, 0);
+	set_color_instanced_helper_model(&helper_models->cubes, 0, 1, 0, 0, 1);
 	scale_instanced_helper_model(&helper_models->cubes, 0, 0.1f, 0.1f, 0.1f);
 	/* Origin */
 
 	/* Axes */
 	add_helper_model(&helper_models->cubes, 0, 0, 0);
-	set_color_instanced_helper_model(&helper_models->cubes, 1, 0, 0, 1);
+	set_color_instanced_helper_model(&helper_models->cubes, 1, 0, 0, 1, 1);
 	scale_instanced_helper_model(&helper_models->cubes, 1, 20, 0.015f, 0.015f);
 
 	add_helper_model(&helper_models->cubes, 0, 0, 0);
-	set_color_instanced_helper_model(&helper_models->cubes, 2, 1, 0, 0);
+	set_color_instanced_helper_model(&helper_models->cubes, 2, 1, 0, 0, 1);
 	scale_instanced_helper_model(&helper_models->cubes, 2, 20, 0.015f, 0.015f);
 	rotate_instanced_helper_model(&helper_models->cubes, 2, 0, 0, 1, 90);
 
 	add_helper_model(&helper_models->cubes, 0, 0, 0);
-	set_color_instanced_helper_model(&helper_models->cubes, 3, 0, 1, 0);
+	set_color_instanced_helper_model(&helper_models->cubes, 3, 0, 1, 0, 1);
 	scale_instanced_helper_model(&helper_models->cubes, 3, 20, 0.015f, 0.015f);
 	rotate_instanced_helper_model(&helper_models->cubes, 3, 0, 1, 0, 90);
 	/* Axes */
 
 	/* Move sticks */
 	add_helper_model(&helper_models->cubes, 0, 0, 0);
-	set_color_instanced_helper_model(&helper_models->cubes, 4, 0, 0, 1);
+	set_color_instanced_helper_model(&helper_models->cubes, 4, 0, 0, 1, 1);
 	scale_instanced_helper_model(&helper_models->cubes, 4, 0.3f, 0.05f, 0.05f);
 
 	add_helper_model(&helper_models->cubes, 0, 0, 0);
-	set_color_instanced_helper_model(&helper_models->cubes, 5, 1, 0, 0);
+	set_color_instanced_helper_model(&helper_models->cubes, 5, 1, 0, 0, 1);
 	scale_instanced_helper_model(&helper_models->cubes, 5, 0.3f, 0.05f, 0.05f);
 
 	add_helper_model(&helper_models->cubes, 0, 0, 0);
-	set_color_instanced_helper_model(&helper_models->cubes, 6, 0, 1, 0);
+	set_color_instanced_helper_model(&helper_models->cubes, 6, 0, 1, 0, 1);
 	scale_instanced_helper_model(&helper_models->cubes, 6, 0.3f, 0.05f, 0.05f);
 	/* Move sticks */
 
@@ -408,11 +411,39 @@ static void translate_instanced_model_using_movesticks(HelperModels *helper_mode
 	}
 }
 
+void rotate_helper_models_along(HelperModels *helper_models, uint32_t model_index, Vector *ray, uint8_t along_x, uint8_t along_y, uint8_t along_z) {
+	if(model_index >= helper_models->cubes.num_models) {
+		printf("WARNING: In rotate_helper_models_along(): model_index(%u) >= num_models(%u)\n", model_index, helper_models->cubes.num_models);
+	}
+	else {
+		Vector3 pos_1, pos_2;
+		if(along_z) {
+			uint8_t valid_1 = get_position_along_axis(&helper_models->cubes.positions[model_index], &pos_1, ray, 1, 0, 0);
+			uint8_t valid_2 = get_position_along_axis(&helper_models->cubes.positions[model_index], &pos_2, ray, 0, 1, 0);
+			if(valid_1 && valid_2) {
+				Vector3 vec_1 = { 1, 0, 0 };
+				Vector3 vec_2 = { pos_1.x, pos_2.y, 0 };
+				float angle = angle_vectors(&vec_1, &vec_2);
+				angle = 360 - to_degrees(angle);
+			}
+		}
+	}
+}
+
+static void rotate_instanced_model_using_movesticks(HelperModels *helper_models, InstancedModel *instanced_model, Vector *ray) {
+	if(helper_models->active_helper_model_index != -1) {
+		if(helper_models->active_helper_model_index == 4)
+			rotate_helper_models_along(helper_models, helper_models->active_helper_model_index, ray, 0, 0, 1);
+	}
+}
+
 void handle_mouse_movement_helper_models(HelperModels *helper_models, InstancedModel *instanced_model, ModelPropertiesGUI *model_properties_gui, Vector *ray) {
 	if(model_properties_gui->check_translation.checked)
 		translate_instanced_model_using_movesticks(helper_models, instanced_model, ray);
 	else if(model_properties_gui->check_scale.checked)
 		scale_instanced_model_using_movesticks(helper_models, instanced_model, ray);
+	else if(model_properties_gui->check_rotation.checked)
+		rotate_instanced_model_using_movesticks(helper_models, instanced_model, ray);
 }
 
 void handle_mouse_click_helper_models(HelperModels *helper_models, Vector *ray) {
@@ -421,16 +452,16 @@ void handle_mouse_click_helper_models(HelperModels *helper_models, Vector *ray) 
 	if(hit_index != -1) {
 		if(helper_models->active_helper_model_index != -1) {
 			Vector3 dc = { helper_models->default_colors[helper_models->active_helper_model_index].x, helper_models->default_colors[helper_models->active_helper_model_index].y, helper_models->default_colors[helper_models->active_helper_model_index].z };
-			set_color_instanced_helper_model(&helper_models->cubes, helper_models->active_helper_model_index, dc.x, dc.y, dc.z);
+			set_color_instanced_helper_model(&helper_models->cubes, helper_models->active_helper_model_index, dc.x, dc.y, dc.z, 1);
 		}
 		if(hit_index >= 4 && hit_index <= 6) {
-			set_color_instanced_helper_model(&helper_models->cubes, hit_index, 1, 1, 1);
+			set_color_instanced_helper_model(&helper_models->cubes, hit_index, 1, 1, 1, 1);
 			helper_models->active_helper_model_index = hit_index;
 		}
 	}
 	else if(helper_models->active_helper_model_index != -1) {
 		Vector3 dc = { helper_models->default_colors[helper_models->active_helper_model_index].x, helper_models->default_colors[helper_models->active_helper_model_index].y, helper_models->default_colors[helper_models->active_helper_model_index].z };
-		set_color_instanced_helper_model(&helper_models->cubes, helper_models->active_helper_model_index, dc.x, dc.y, dc.z);
+		set_color_instanced_helper_model(&helper_models->cubes, helper_models->active_helper_model_index, dc.x, dc.y, dc.z, 1);
 		helper_models->active_helper_model_index = -1;
 	}
 }

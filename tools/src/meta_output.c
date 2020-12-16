@@ -20,6 +20,7 @@ extern GLuint instanced_program;
 extern GLuint instanced_helper_program;
 extern GLuint dir_light_program;
 extern GLuint spot_light_program;
+extern GLuint exp_lines_program;
 extern GLuint background_left_texture;
 extern GLuint model_properties_background_texture;
 extern GLuint cursor_texture;
@@ -42,6 +43,7 @@ void load() {
 	instanced_helper_program = compile_shader(combine_string(shaders_path, "helper_model.vert"), combine_string(shaders_path, "helper_model.frag"));
 	dir_light_program = compile_shader(combine_string(shaders_path, "v_dir_light.shader"), combine_string(shaders_path, "f_dir_light.shader"));
 	spot_light_program = compile_shader(combine_string(shaders_path, "v_spot_light.shader"), combine_string(shaders_path, "f_spot_light.shader"));
+	exp_lines_program = compile_shader(combine_string(shaders_path, "exp_lines.vert"), combine_string(shaders_path, "exp_lines.frag"));
 
 	background_left_texture = make_texture(combine_string(assets_path, "png/test_1.png"));
 	model_properties_background_texture = make_texture(combine_string(assets_path, "png/model_properties.png"));

@@ -17,8 +17,10 @@ typedef struct ModelPropertiesGUI {
 	Text model_location_text;
 	Text check_location_indicator_text;
 	Text check_scale_indicator_text;
+	Text check_rotation_indicator_text;
 	CheckBox check_translation;
 	CheckBox check_scale;
+	CheckBox check_rotation;
 	Button close_button;
 
 	uint8_t show;

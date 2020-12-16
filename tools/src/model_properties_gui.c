@@ -66,6 +66,16 @@ void init_model_properties_gui(ModelPropertiesGUI *model_properties_gui, Font *s
 	init_checkbox(&model_properties_gui->check_scale, rectangle_program, ht_button_texture, check_texture, 0.04f, 0.06f);
 	translate_checkbox(&model_properties_gui->check_scale, model_properties_gui->background.position.x - (model_properties_gui->background.dimensions.x / 2.0f) * 0.5f + model_properties_gui->check_scale.box.dimensions.x / 2.0f, model_properties_gui->background.position.y - (model_properties_gui->background.dimensions.y / 2.0f) * 0.05f);
 	/* Check scale */
+
+	/* Check rotation indicator */
+	init_text(&model_properties_gui->check_rotation_indicator_text, small_font, "rotation", 0, 0, 1, 1, 0);
+	set_text_position(&model_properties_gui->check_rotation_indicator_text, model_properties_gui->background.position.x - (model_properties_gui->background.dimensions.x / 2.0f) * 0.2f, model_properties_gui->background.position.y + (model_properties_gui->background.dimensions.y / 2.0f) * 0.1f);
+	/* Check rotation indicator */
+
+	/* Check rotation */
+	init_checkbox(&model_properties_gui->check_rotation, rectangle_program, ht_button_texture, check_texture, 0.04f, 0.06f);
+	translate_checkbox(&model_properties_gui->check_rotation, model_properties_gui->background.position.x - (model_properties_gui->background.dimensions.x / 2.0f) * 0.2f + model_properties_gui->check_rotation.box.dimensions.x / 2.0f, model_properties_gui->background.position.y - (model_properties_gui->background.dimensions.y / 2.0f) * 0.05f);
+	/* Check rotation */
 }
 
 static void update_model_properties_location_text(ModelPropertiesGUI *model_properties_gui, float norm_x, float norm_y, float norm_z) {
@@ -122,6 +132,8 @@ void translate_move_tag_and_update_properties_gui(ModelPropertiesGUI *model_prop
 		translate_checkbox(&model_properties_gui->check_translation, model_properties_gui->background.position.x - (model_properties_gui->background.dimensions.x / 2.0f) * 0.9f + model_properties_gui->check_translation.box.dimensions.x / 2.0f, model_properties_gui->background.position.y - (model_properties_gui->background.dimensions.y / 2.0f) * 0.05f);
 		set_text_position(&model_properties_gui->check_scale_indicator_text, model_properties_gui->background.position.x - (model_properties_gui->background.dimensions.x / 2.0f) * 0.5f, model_properties_gui->background.position.y + (model_properties_gui->background.dimensions.y / 2.0f) * 0.1f);
 		translate_checkbox(&model_properties_gui->check_scale, model_properties_gui->background.position.x - (model_properties_gui->background.dimensions.x / 2.0f) * 0.5f + model_properties_gui->check_scale.box.dimensions.x / 2.0f, model_properties_gui->background.position.y - (model_properties_gui->background.dimensions.y / 2.0f) * 0.05f);
+		set_text_position(&model_properties_gui->check_rotation_indicator_text, model_properties_gui->background.position.x - (model_properties_gui->background.dimensions.x / 2.0f) * 0.2f, model_properties_gui->background.position.y + (model_properties_gui->background.dimensions.y / 2.0f) * 0.1f);
+		translate_checkbox(&model_properties_gui->check_rotation, model_properties_gui->background.position.x - (model_properties_gui->background.dimensions.x / 2.0f) * 0.2f + model_properties_gui->check_rotation.box.dimensions.x / 2.0f, model_properties_gui->background.position.y - (model_properties_gui->background.dimensions.y / 2.0f) * 0.05f);
 	}
 }
 
@@ -138,11 +150,20 @@ void handle_mouse_click_properties_gui(ModelPropertiesGUI *model_properties_gui,
 		button_clicked(&model_properties_gui->close_button, mouse_norm_pos);
 		uint8_t hit_trans = checkbox_clicked(&model_properties_gui->check_translation, mouse_norm_pos);
 		uint8_t hit_scale = checkbox_clicked(&model_properties_gui->check_scale, mouse_norm_pos);
+		uint8_t hit_rotation = checkbox_clicked(&model_properties_gui->check_rotation, mouse_norm_pos);
 
-		if(hit_trans)
+		if(hit_trans) {
 			model_properties_gui->check_scale.checked = 0;
-		else if(hit_scale)
+			model_properties_gui->check_rotation.checked = 0;
+		}
+		else if(hit_scale) {
 			model_properties_gui->check_translation.checked = 0;
+			model_properties_gui->check_rotation.checked = 0;
+		}
+		else if(hit_rotation) {
+			model_properties_gui->check_translation.checked = 0;
+			model_properties_gui->check_scale.checked = 0;
+		}
 	}
 }
 
@@ -154,8 +175,10 @@ void draw_model_properties_gui(ModelPropertiesGUI *model_properties_gui, float c
 		show_text(&model_properties_gui->model_location_indicator_text, text_program);
 		show_text(&model_properties_gui->check_location_indicator_text, text_program);
 		show_text(&model_properties_gui->check_scale_indicator_text, text_program);
+		show_text(&model_properties_gui->check_rotation_indicator_text, text_program);
 		draw_checkbox(&model_properties_gui->check_translation);
 		draw_checkbox(&model_properties_gui->check_scale);
+		draw_checkbox(&model_properties_gui->check_rotation);
 		draw_button(&model_properties_gui->close_button, text_program, current_time);
 		draw_rectangle_2d(&model_properties_gui->background);
 		draw_rectangle_2d(&model_properties_gui->move_tag);

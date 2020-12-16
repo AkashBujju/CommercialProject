@@ -11,6 +11,7 @@
 #include "model_properties_gui.h"
 #include "helper_models.h"
 #include "meta_output.h"
+#include "exp_lines.h"
 
 Vector3 front, position, up;
 static uint8_t first_mouse = 1;
@@ -36,22 +37,33 @@ void character_callback(GLFWwindow*, unsigned int);
 
 uint16_t window_width, window_height;
 Matrix4 view, projection, text_projection;
-GLuint rectangle_program, text_program, instanced_program, dir_light_program, spot_light_program, instanced_helper_program;
+GLuint rectangle_program, text_program, instanced_program, dir_light_program, spot_light_program, instanced_helper_program, exp_lines_program;
 GLuint background_left_texture, box_texture, ht_box_texture, button_texture, ht_button_texture, cursor_texture, model_properties_background_texture, close_button_texture, move_tag_texture, check_texture;
-
-InstancedModel instanced_model;
-HelperModels helper_models;
 Font consolas, georgia_bold_12, georgia_bold_16, georgia_bold_20;
-ModelLoaderGUI model_loader_gui;
-ModelPropertiesGUI model_properties_gui;
+
+static InstancedModel instanced_model;
+static HelperModels helper_models;
+static ModelLoaderGUI model_loader_gui;
+static ModelPropertiesGUI model_properties_gui;
+ExpLines exp_lines;
 
 int main() {
 	GLFWwindow *window = init_gl_and_window("Model Editor", &window_width, &window_height, 1);
 	load();
 
-	load_instanced_model(&instanced_model, instanced_program, "torus", combine_string(tmp_models_path, "torus.model"));
+	load_instanced_model(&instanced_model, instanced_program, "cube", combine_string(tmp_models_path, "cube_1.model"));
+	add_model(&instanced_model, 0, 0, 0, "silver");
+	scale_instanced_model(&instanced_model, 0, 1, 0.05f, 0.05f);
+	translate_instanced_model(&instanced_model, 0, 0, 0, 2);
+	set_initial_pose_instanced_model(&instanced_model, 0, 0, 0, 2, 0, 1, 0, 90);
 
 	init_helper_models(&helper_models, instanced_helper_program);
+
+	/* Experiment Lines */
+	init_exp_lines(&exp_lines);
+	// add_exp_line(&exp_lines, 0, 0, 0, 1, 2, 0, 1, 0, 0);
+	// add_exp_line(&exp_lines, 0, 0, 0, 2, 2, 0, 1, 0, 0);
+	/* Experiment Lines */
 
 	InstancedDirLight instanced_dir_light;
 	load_instanced_dir_light(&instanced_dir_light, dir_light_program, combine_string(tmp_models_path, "cube_1.model"), 2);
@@ -111,6 +123,8 @@ int main() {
 		set_matrix4(dir_light_program, "projection", &projection);
 		set_matrix4(spot_light_program, "view", &view);
 		set_matrix4(spot_light_program, "projection", &projection);
+		set_matrix4(exp_lines_program, "view", &view);
+		set_matrix4(exp_lines_program, "projection", &projection);
 		/* Set the view and projection */
 
 		/* Setting viewPos */
@@ -120,12 +134,19 @@ int main() {
 		set_vector3(instanced_helper_program, "viewPos", &position);
 		/* Setting viewPos */
 
+		/* TESTING ROTATION */
+		float angle = (sin(current_time) + 1) / 2.0f * 360;
+		rotate_instanced_model_about(&instanced_model, 0, 0, 1, 0, 0, 0, 1, -angle);
 		draw_instanced_model(&instanced_model, &instanced_dir_light, &instanced_spot_light);
+		/* TESTING ROTATION */
+
 		draw_instanced_dir_light(&instanced_dir_light);
 		draw_instanced_spot_light(&instanced_spot_light);
 
 		handle_transition_gui(&model_loader_gui, 1, 0);
 		draw_model_loader_gui(&model_loader_gui, current_time);
+
+		draw_exp_lines(&exp_lines);
 
 		/* @Note: Change this in the future */
 		double x_pos, y_pos;
@@ -284,7 +305,6 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 		Vector ray = compute_mouse_ray_2(norm.x, norm.y, &view, &projection);
 
 		uint32_t hit_index = obb(instanced_model.models, instanced_model.positions, instanced_model.num_models, instanced_model.bounding_boxes, &ray);
-
 		if(hit_index != -1) {
 			model_properties_gui.show = 1;
 			set_instanced_model_info_to_properties_gui(&model_properties_gui, &instanced_model, hit_index);
