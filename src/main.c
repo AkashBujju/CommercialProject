@@ -23,7 +23,7 @@ static float last_x, last_y;
 static float camera_speed = 0.5f;
 static float zoom_speed = 1.0f;
 const char* assets_path = "../data/";
-const char* shaders_path = "../shaders/";
+const char* shaders_path = "..\\shaders\\";
 const char* tmp_models_path = "../tools/data_out/";
 
 int main() {
@@ -31,7 +31,7 @@ int main() {
 	uint16_t window_height = 768;
 	GLFWwindow *window = init_gl_and_window("CommercialProject", window_width, window_height, 0);
 	GLuint program = compile_shader(combine_string(shaders_path, "v_shader.shader"), combine_string(shaders_path, "f_shader.shader"));
-	GLuint light_program = compile_shader(combine_string(shaders_path, "v_light.shader"), combine_string(shaders_path, "f_light.shader"));
+	/* GLuint light_program = compile_shader(combine_string(shaders_path, "v_light.shader"), combine_string(shaders_path, "f_light.shader")); */
 
 	/* Init view and projection */
 	Matrix4 view, projection;
@@ -46,10 +46,10 @@ int main() {
 	load_model(&m1, program, combine_string(tmp_models_path, "plane.model"));
 	translate_model(&m1, 0, 0, 0);
 
-	Light l1;
+	/* Light l1;
 	load_light(&l1, light_program, combine_string(tmp_models_path, "light_cube.model"));
 	translate_light(&l1, 3, 5, -5);
-	scale_light(&l1, 0.2f, 0.2f, 0.2f);
+	scale_light(&l1, 0.2f, 0.2f, 0.2f); */
 
 	Vector3 objectColor, lightColor;
 	init_vector(&objectColor, 0.1f, 0.8f, 0.1f);
@@ -65,24 +65,24 @@ int main() {
 		view = look_at(&position, &pos_plus_front, &up);
 		set_matrix4(program, "view", &view);
 		set_matrix4(program, "projection", &projection);
-		set_matrix4(light_program, "view", &view);
-		set_matrix4(light_program, "projection", &projection);
+		/* set_matrix4(light_program, "view", &view);
+		set_matrix4(light_program, "projection", &projection); */
 
 		/* Moving the light */
 		const float radius = 5.0f;
 		float light_x = sin(glfwGetTime()) * radius;
 		float light_z = cos(glfwGetTime()) * radius;
-		translate_light(&l1, light_x, +5, light_z);
+		/* translate_light(&l1, light_x, +5, light_z); */
 		/* Moving the light */
 
 		glUseProgram(m1.program);
 		set_vector3(m1.program, "objectColor", &objectColor);
 		set_vector3(m1.program, "lightColor", &lightColor);
-		set_vector3(m1.program, "lightPos", &l1.position);
+		/* set_vector3(m1.program, "lightPos", &l1.position); */
 		set_vector3(m1.program, "viewPos", &position);
 
 		draw_model(&m1);
-		draw_light(&l1);
+		/* draw_light(&l1); */
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
