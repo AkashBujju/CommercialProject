@@ -52,11 +52,6 @@ int main() {
 	load();
 
 	load_instanced_model(&instanced_model, instanced_program, "cube", combine_string(tmp_models_path, "cube_1.model"));
-	add_model(&instanced_model, 0, 0, 0, "silver");
-	scale_instanced_model(&instanced_model, 0, 1, 0.05f, 0.05f);
-	translate_instanced_model(&instanced_model, 0, 0, 0, 2);
-	set_initial_pose_instanced_model(&instanced_model, 0, 0, 0, 2, 0, 1, 0, 90);
-
 	init_helper_models(&helper_models, instanced_helper_program);
 
 	/* Experiment Lines */
@@ -134,12 +129,7 @@ int main() {
 		set_vector3(instanced_helper_program, "viewPos", &position);
 		/* Setting viewPos */
 
-		/* TESTING ROTATION */
-		float angle = (sin(current_time) + 1) / 2.0f * 360;
-		rotate_instanced_model_about(&instanced_model, 0, 0, 1, 0, 0, 0, 1, -angle);
 		draw_instanced_model(&instanced_model, &instanced_dir_light, &instanced_spot_light);
-		/* TESTING ROTATION */
-
 		draw_instanced_dir_light(&instanced_dir_light);
 		draw_instanced_spot_light(&instanced_spot_light);
 
@@ -304,7 +294,7 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 		Vector3 norm = normalize_to(x_pos, y_pos, window_width, window_height);
 		Vector ray = compute_mouse_ray_2(norm.x, norm.y, &view, &projection);
 
-		uint32_t hit_index = obb(instanced_model.models, instanced_model.positions, instanced_model.num_models, instanced_model.bounding_boxes, &ray);
+		uint32_t hit_index = obb(instanced_model.models, instanced_model.num_models, instanced_model.bounding_boxes, &ray);
 		if(hit_index != -1) {
 			model_properties_gui.show = 1;
 			set_instanced_model_info_to_properties_gui(&model_properties_gui, &instanced_model, hit_index);

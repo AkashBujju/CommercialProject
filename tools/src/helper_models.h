@@ -13,11 +13,15 @@ typedef struct InstancedHelperModel {
 	GLuint instanceModelVBO;
 	GLuint instanceColorVBO;
 	Matrix4 models[MAX_INSTANCED_HELPER_MODELS];
-	Vector3 positions[MAX_INSTANCED_HELPER_MODELS];
+	Vector3 _positions[MAX_INSTANCED_HELPER_MODELS]; /* @Note: Use with caution!!!! */
+	Vector3 initial_positions[MAX_INSTANCED_HELPER_MODELS];
 	Vector3 scales[MAX_INSTANCED_HELPER_MODELS];
 	Vector3 rotation_axes[MAX_INSTANCED_HELPER_MODELS];
+	Vector3 rotation_points[MAX_INSTANCED_HELPER_MODELS];
+	Vector3 initial_rotation_axes[MAX_INSTANCED_HELPER_MODELS];
 	Vector4 colors[MAX_INSTANCED_HELPER_MODELS];
 	float angle_in_degree[MAX_INSTANCED_HELPER_MODELS];
+	float initial_angle_in_degree[MAX_INSTANCED_HELPER_MODELS];
 	BoundingBox bounding_boxes[MAX_INSTANCED_HELPER_MODELS];
 	uint32_t num_models;
 	uint32_t num_vertices;
@@ -25,8 +29,9 @@ typedef struct InstancedHelperModel {
 
 void load_instanced_helper_model(InstancedHelperModel *instanced_helper_model, GLuint program, const char* model_filename);
 void add_helper_model(InstancedHelperModel *instanced_helper_model, float x, float y, float z);
+void set_initial_pose_instanced_helper_model(InstancedHelperModel *instanced_helper_model, uint32_t model_index, float px, float py, float pz, float axis_x, float axis_y, float axis_z, float angle);
 void draw_instanced_helper_model(InstancedHelperModel *instanced_helper_model, InstancedDirLight *instanced_dir_light);
-void rotate_instanced_helper_model(InstancedHelperModel *instanced_helper_model, uint32_t model_index, float x, float y, float z, float degree);
+void rotate_instanced_helper_model_about(InstancedHelperModel *instanced_helper_model, uint32_t model_index, float axis_x, float axis_y, float axis_z, float about_x, float about_y, float about_z, float degree);
 void scale_instanced_helper_model(InstancedHelperModel *instanced_helper_model, uint32_t model_index, float x, float y, float z);
 void translate_instanced_helper_model(InstancedHelperModel *instanced_helper_model, uint32_t model_index, float x, float y, float z);
 void set_color_instanced_helper_model(InstancedHelperModel *instanced_helper_model, uint32_t model_index, float r, float g, float b, float a);

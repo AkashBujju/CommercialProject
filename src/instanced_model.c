@@ -316,16 +316,14 @@ void draw_instanced_model(InstancedModel *instanced_model, InstancedDirLight *in
 
 		translate_matrix(&instanced_model->models[i], instanced_model->positions[i].x, instanced_model->positions[i].y, instanced_model->positions[i].z);
 		scale(&instanced_model->models[i], instanced_model->scales[i].x, instanced_model->scales[i].y, instanced_model->scales[i].z);
-		Vector3 tmp_position;
-		init_vector(&tmp_position, 
-				instanced_model->positions[i].x, 
-				instanced_model->positions[i].y, 
-				instanced_model->positions[i].z);
+
+		/* Rotation about a point */
 		Vector3 *about_point = &instanced_model->rotation_points[i];
 		Vector3 disp = { instanced_model->positions[i].x - about_point->x, instanced_model->positions[i].y - about_point->y, instanced_model->positions[i].z - about_point->z };
 		translateBy_matrix(&instanced_model->models[i], -disp.x, -disp.y, -disp.z);
 		rotate(&instanced_model->models[i], &instanced_model->rotation_axes[i], instanced_model->angle_in_degree[i]);
 		translateBy_matrix(&instanced_model->models[i], +disp.x, +disp.y, +disp.z);
+		/* Rotation about a point */
 	}
 	/* Updating in-struct Model Matrix */
 

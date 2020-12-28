@@ -108,7 +108,7 @@ float f_normalize(float value, float from_range_start, float from_range_end, flo
 Vector4 mul_mat4_and_vec(Matrix4 *mat, Vector4 *vec);
 Vector compute_mouse_ray(float norm_x, float norm_y, Matrix4 *view, Matrix4 *projection);
 Vector compute_mouse_ray_2(float norm_x, float norm_y, Matrix4 *view, Matrix4 *projection);
-uint32_t obb(Matrix4 *models, Vector3 *positions, uint32_t count, struct BoundingBox *bounding_boxes, Vector *ray);
+uint32_t obb(Matrix4 *models, uint32_t count, struct BoundingBox *bounding_boxes, Vector *ray);
 uint8_t get_position_along_axis(Vector3 *position, Vector3 *result, Vector *ray, uint8_t along_x, uint8_t along_y, uint8_t along_z);
 int in_plane_point(Box *box, Vector3 *res, Vector3 *ray_start, Vector3* ray_end);
 float get_distance(Vector3 *p1, Vector3 *p2);

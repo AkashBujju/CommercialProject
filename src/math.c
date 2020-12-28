@@ -3,6 +3,9 @@
 #include <string.h>
 #include <stdio.h>
 #include "instanced_model.h"
+#include "../tools/src/exp_lines.h" // TMP
+
+extern ExpLines exp_lines; // TMP
 
 float f_max(float f1, float f2) {
 	if (f1 > f2)
@@ -528,7 +531,7 @@ uint8_t get_position_along_axis(Vector3 *position, Vector3 *result, Vector *ray,
 	return 1;
 }
 
-uint32_t obb(Matrix4 *models, Vector3 *positions, uint32_t count, BoundingBox *bounding_boxes, Vector *ray) {
+uint32_t obb(Matrix4 *models, uint32_t count, BoundingBox *bounding_boxes, Vector *ray) {
 	unsigned int hit_indices[50];
 	unsigned int hit_count = 0;
 
@@ -540,11 +543,17 @@ uint32_t obb(Matrix4 *models, Vector3 *positions, uint32_t count, BoundingBox *b
 		init_vector(&up, matrix[4], matrix[5], matrix[6]);
 		init_vector(&forward, matrix[8], matrix[9], matrix[10]);
 
+		/* TMP */
+		Vector3 tmp_right = scalar_mul(&right, 10);
+		// add_exp_line(&exp_lines, p.x, p.y, p.z, tmp_right.x, tmp_right.y, tmp_right.z, 1, 0, 0);
+		/* TMP */
+
 		normalize_vector(&right);
 		normalize_vector(&up);
 		normalize_vector(&forward);
 
-		Vector3 bb_ray_delta = sub(&positions[i], &ray->point);
+		Vector3 position = { matrix[12], matrix[13], matrix[14] };
+		Vector3 bb_ray_delta = sub(&position, &ray->point);
 		Vector3 min_bound, max_bound;
 		float width_by_2 = bounding_boxes[i].width / 2;
 		float height_by_2 = bounding_boxes[i].height / 2;
@@ -564,17 +573,9 @@ uint32_t obb(Matrix4 *models, Vector3 *positions, uint32_t count, BoundingBox *b
 				min = (nom_len + min_bound.x) / denom_len;
 				max = (nom_len + max_bound.x) / denom_len;
 
-				if(min < max) {
-					t_min = min;
-					t_max = max;
-				}
-				else {
-					t_min = max;
-					t_max = min;
-				}
-
-				if(t_max < t_min)
-					continue;
+				if(min < max) { t_min = min; t_max = max; }
+				else { t_min = max; t_max = min; }
+				if(t_max < t_min) continue;
 			}
 			else {
 				if((-nom_len + min_bound.x) > 0 || (-nom_len + max_bound.x) < 0)
@@ -592,17 +593,9 @@ uint32_t obb(Matrix4 *models, Vector3 *positions, uint32_t count, BoundingBox *b
 				min = (nom_len + min_bound.y) / denom_len;
 				max = (nom_len + max_bound.y) / denom_len;
 
-				if(min < max) {
-					t_min = f_max(t_min, min);
-					t_max = f_min(t_max, max);
-				}
-				else {
-					t_min = f_max(t_min, max);
-					t_max = f_min(t_max, min);
-				}
-
-				if(t_max < t_min)
-					continue;
+				if(min < max) { t_min = f_max(t_min, min); t_max = f_min(t_max, max); }
+				else { t_min = f_max(t_min, max); t_max = f_min(t_max, min); }
+				if(t_max < t_min) continue;
 			}
 			else {
 				if((-nom_len + min_bound.y) > 0 || (-nom_len + max_bound.y) < 0)
@@ -620,17 +613,9 @@ uint32_t obb(Matrix4 *models, Vector3 *positions, uint32_t count, BoundingBox *b
 				min = (nom_len + min_bound.z) / denom_len;
 				max = (nom_len + max_bound.z) / denom_len;
 
-				if(min < max) {
-					t_min = f_max(t_min, min);
-					t_max = f_min(t_max, max);
-				}
-				else {
-					t_min = f_max(t_min, max);
-					t_max = f_min(t_max, min);
-				}
-
-				if(t_max < t_min)
-					continue;
+				if(min < max) { t_min = f_max(t_min, min); t_max = f_min(t_max, max); }
+				else { t_min = f_max(t_min, max); t_max = f_min(t_max, min); }
+				if(t_max < t_min) continue;
 			}
 			else {
 				if((-nom_len + min_bound.z) > 0 || (-nom_len + max_bound.z) < 0)
@@ -652,7 +637,9 @@ uint32_t obb(Matrix4 *models, Vector3 *positions, uint32_t count, BoundingBox *b
 	unsigned int min_index = 0;
 	for(unsigned int i = 0; i < hit_count; ++i) {
 		int current_index = hit_indices[i];
-		float distance = get_distance(&ray->point, &positions[current_index]);
+		float *matrix = models[i].matrix;
+		Vector3 position = { matrix[12], matrix[13], matrix[14] };
+		float distance = get_distance(&ray->point, &position);
 		if(distance < current_distance) {
 			current_distance = distance;
 			min_index = current_index;

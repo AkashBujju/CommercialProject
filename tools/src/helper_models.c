@@ -47,8 +47,9 @@ void load_instanced_helper_model(InstancedHelperModel *instanced_helper_model, G
 
 		for(uint32_t i = 0; i < MAX_INSTANCED_HELPER_MODELS; ++i) {
 		 	/* @Note: Change the below to custom values later */
+			init_vector(&instanced_helper_model->_positions[i], 0, 0, 0);
+		 	init_vector(&instanced_helper_model->initial_positions[i], 0, 0, 0);
 		 	init_vector(&instanced_helper_model->scales[i], 1, 1, 1);
-		 	init_vector(&instanced_helper_model->positions[i], 0, 0, 0);
 		 	init_vector4(&instanced_helper_model->colors[i], 0.5f, 0.5f, 0.5f, 1.0f);
 			instanced_helper_model->bounding_boxes[i].width = model_width;
 			instanced_helper_model->bounding_boxes[i].height = model_height;
@@ -56,7 +57,9 @@ void load_instanced_helper_model(InstancedHelperModel *instanced_helper_model, G
 			make_identity(&instanced_helper_model->models[i]);
 			/* @Note: Change the width, height and depth to be the bounding of the model */
 		 	instanced_helper_model->angle_in_degree[i] = 0;
+		 	instanced_helper_model->initial_angle_in_degree[i] = 0;
 		 	init_vector(&instanced_helper_model->rotation_axes[i], 0, 0, 0);
+		 	init_vector(&instanced_helper_model->initial_rotation_axes[i], 0, 0, 0);
 		}
 
 		/* Instance VBOs */
@@ -120,6 +123,17 @@ void load_instanced_helper_model(InstancedHelperModel *instanced_helper_model, G
 	}
 }
 
+void set_initial_pose_instanced_helper_model(InstancedHelperModel *instanced_helper_model, uint32_t model_index, float px, float py, float pz, float axis_x, float axis_y, float axis_z, float angle) {
+	if(model_index >= instanced_helper_model->num_models) {
+		printf("WARNING: In set_initial_pose_instanced_helper_model(): model_index(%u) >= num_models(%u)\n", model_index, instanced_helper_model->num_models);
+	}
+	else {
+		init_vector(&instanced_helper_model->initial_positions[model_index], px, py, pz);
+		init_vector(&instanced_helper_model->initial_rotation_axes[model_index], axis_x, axis_y, axis_z);
+		instanced_helper_model->initial_angle_in_degree[model_index] = angle;
+	}
+}
+
 void add_helper_model(InstancedHelperModel *instanced_helper_model, float x, float y, float z) {
 	if(instanced_helper_model->num_models >= MAX_INSTANCED_HELPER_MODELS) {
 		printf("WARNING: num_helper_models(%d) >= MAX_INSTANCED_HELPER_MODELS(%d)\n", instanced_helper_model->num_models, MAX_INSTANCED_HELPER_MODELS);
@@ -152,9 +166,7 @@ void translate_instanced_helper_model(InstancedHelperModel *instanced_helper_mod
 		printf("WARNING: In translate_instanced_helper_model(): model_index(%u) >= num_models(%u)\n", model_index, instanced_helper_model->num_models);
 	}
 	else {
-		instanced_helper_model->positions[model_index].x = x;
-		instanced_helper_model->positions[model_index].y = y;
-		instanced_helper_model->positions[model_index].z = z;
+		init_vector(&instanced_helper_model->_positions[model_index], x, y, z);
 	}
 }
 
@@ -163,24 +175,23 @@ void scale_instanced_helper_model(InstancedHelperModel *instanced_helper_model, 
 		printf("WARNING: In scale_instanced_helper_model(): model_index(%u) >= num_models(%u)\n", model_index, instanced_helper_model->num_models);
 	}
 	else {
-		instanced_helper_model->scales[model_index].x *= x;
-		instanced_helper_model->scales[model_index].y *= y;
-		instanced_helper_model->scales[model_index].z *= z;
+		init_vector(&instanced_helper_model->scales[model_index], x, y, z);
 		instanced_helper_model->bounding_boxes[model_index].width *= x;
 		instanced_helper_model->bounding_boxes[model_index].height *= y;
 		instanced_helper_model->bounding_boxes[model_index].depth *= z;
 	}
 }
 
-void rotate_instanced_helper_model(InstancedHelperModel *instanced_helper_model, uint32_t model_index, float x, float y, float z, float degree) {
+void rotate_instanced_helper_model_about(InstancedHelperModel *instanced_helper_model, uint32_t model_index, float axis_x, float axis_y, float axis_z, float about_x, float about_y, float about_z, float degree) {
 	if(model_index >= instanced_helper_model->num_models) {
 		printf("WARNING: In rotate_instanced_helper_model(): model_index(%u) >= num_models(%u)\n", model_index, instanced_helper_model->num_models);
 	}
 	else {
 		instanced_helper_model->angle_in_degree[model_index] = degree;
-		instanced_helper_model->rotation_axes[model_index].x = x;
-		instanced_helper_model->rotation_axes[model_index].y = y;
-		instanced_helper_model->rotation_axes[model_index].z = z;
+		init_vector(&instanced_helper_model->rotation_points[model_index], about_x, about_y, about_z);
+		instanced_helper_model->rotation_axes[model_index].x = axis_x;
+		instanced_helper_model->rotation_axes[model_index].y = axis_y;
+		instanced_helper_model->rotation_axes[model_index].z = axis_z;
 	}
 }
 
@@ -203,16 +214,22 @@ void draw_instanced_helper_model(InstancedHelperModel *instanced_helper_model, I
 	for(uint32_t i = 0; i < instanced_helper_model->num_models; ++i) {
 		make_identity(&instanced_helper_model->models[i]);
 
-		translate_matrix(&instanced_helper_model->models[i], instanced_helper_model->positions[i].x, instanced_helper_model->positions[i].y, instanced_helper_model->positions[i].z);
-		scale(&instanced_helper_model->models[i], instanced_helper_model->scales[i].x, instanced_helper_model->scales[i].y, instanced_helper_model->scales[i].z);
-		Vector3 tmp_position;
-		init_vector(&tmp_position, 
-				instanced_helper_model->positions[i].x, 
-				instanced_helper_model->positions[i].y, 
-				instanced_helper_model->positions[i].z);
+		/* Setting initial pose */
 		translate_matrix(&instanced_helper_model->models[i], 0, 0, 0);
+		rotate(&instanced_helper_model->models[i], &instanced_helper_model->initial_rotation_axes[i], instanced_helper_model->initial_angle_in_degree[i]);
+		translate_matrix(&instanced_helper_model->models[i], instanced_helper_model->initial_positions[i].x, instanced_helper_model->initial_positions[i].y, instanced_helper_model->initial_positions[i].z);
+		/* Setting initial pose */
+
+		translate_matrix(&instanced_helper_model->models[i], instanced_helper_model->_positions[i].x, instanced_helper_model->_positions[i].y, instanced_helper_model->_positions[i].z);
+		scale(&instanced_helper_model->models[i], instanced_helper_model->scales[i].x, instanced_helper_model->scales[i].y, instanced_helper_model->scales[i].z);
+
+		/* Rotation about a point */
+		Vector3 *about_point = &instanced_helper_model->rotation_points[i];
+		Vector3 disp = { instanced_helper_model->_positions[i].x - about_point->x, instanced_helper_model->_positions[i].y - about_point->y, instanced_helper_model->_positions[i].z - about_point->z };
+		translateBy_matrix(&instanced_helper_model->models[i], -disp.x, -disp.y, -disp.z);
 		rotate(&instanced_helper_model->models[i], &instanced_helper_model->rotation_axes[i], instanced_helper_model->angle_in_degree[i]);
-		translate_matrix(&instanced_helper_model->models[i], tmp_position.x, tmp_position.y, tmp_position.z);
+		translateBy_matrix(&instanced_helper_model->models[i], +disp.x, +disp.y, +disp.z);
+		/* Rotation about a point */
 	}
 	/* Updating in-struct Model Matrix */
 
@@ -246,33 +263,41 @@ void init_helper_models(HelperModels *helper_models, GLuint instanced_helper_pro
 	/* Origin */
 
 	/* Axes */
+	// X
 	add_helper_model(&helper_models->cubes, 0, 0, 0);
 	set_color_instanced_helper_model(&helper_models->cubes, 1, 0, 0, 1, 1);
 	scale_instanced_helper_model(&helper_models->cubes, 1, 20, 0.015f, 0.015f);
 
+	// Y
 	add_helper_model(&helper_models->cubes, 0, 0, 0);
 	set_color_instanced_helper_model(&helper_models->cubes, 2, 1, 0, 0, 1);
 	scale_instanced_helper_model(&helper_models->cubes, 2, 20, 0.015f, 0.015f);
-	rotate_instanced_helper_model(&helper_models->cubes, 2, 0, 0, 1, 90);
+	rotate_instanced_helper_model_about(&helper_models->cubes, 2, 0, 0, 1, 0, 0, 0, 90);
 
+	// Z
 	add_helper_model(&helper_models->cubes, 0, 0, 0);
 	set_color_instanced_helper_model(&helper_models->cubes, 3, 0, 1, 0, 1);
 	scale_instanced_helper_model(&helper_models->cubes, 3, 20, 0.015f, 0.015f);
-	rotate_instanced_helper_model(&helper_models->cubes, 3, 0, 1, 0, 90);
+	rotate_instanced_helper_model_about(&helper_models->cubes, 3, 0, 1, 0, 0, 0, 0, 90);
 	/* Axes */
 
 	/* Move sticks */
+	// X
 	add_helper_model(&helper_models->cubes, 0, 0, 0);
 	set_color_instanced_helper_model(&helper_models->cubes, 4, 0, 0, 1, 1);
 	scale_instanced_helper_model(&helper_models->cubes, 4, 0.3f, 0.05f, 0.05f);
 
+	// Y
 	add_helper_model(&helper_models->cubes, 0, 0, 0);
 	set_color_instanced_helper_model(&helper_models->cubes, 5, 1, 0, 0, 1);
 	scale_instanced_helper_model(&helper_models->cubes, 5, 0.3f, 0.05f, 0.05f);
+	set_initial_pose_instanced_helper_model(&helper_models->cubes, 5, 0, 0, 0, 0, 0, 1, 90);
 
+	// Z
 	add_helper_model(&helper_models->cubes, 0, 0, 0);
 	set_color_instanced_helper_model(&helper_models->cubes, 6, 0, 1, 0, 1);
 	scale_instanced_helper_model(&helper_models->cubes, 6, 0.3f, 0.05f, 0.05f);
+	set_initial_pose_instanced_helper_model(&helper_models->cubes, 6, 0, 0, 0, 0, 1, 0, 90);
 	/* Move sticks */
 
 	/* Setting default colors */
@@ -295,12 +320,8 @@ void set_move_sticks(HelperModels *helper_models, InstancedModel *instanced_mode
 	float move_stick_z_pos = model_pos.z + instanced_model->bounding_boxes[model_index].depth / 2.0f + 0.8f;
 
 	translate_instanced_helper_model(&helper_models->cubes, 4, move_stick_x_pos, model_pos.y, model_pos.z);
-
 	translate_instanced_helper_model(&helper_models->cubes, 5, model_pos.x, move_stick_y_pos, model_pos.z);
-	rotate_instanced_helper_model(&helper_models->cubes, 5, 0, 0, 1, 90);
-
 	translate_instanced_helper_model(&helper_models->cubes, 6, model_pos.x, model_pos.y, move_stick_z_pos);
-	rotate_instanced_helper_model(&helper_models->cubes, 6, 0, 1, 0, 90);
 }
 
 void move_helper_models_along(HelperModels *helper_models, uint32_t model_index, Vector *ray, uint8_t along_x, uint8_t along_y, uint8_t along_z) {
@@ -309,17 +330,18 @@ void move_helper_models_along(HelperModels *helper_models, uint32_t model_index,
 	}
 	else {
 		Vector3 pos;
-		uint8_t valid = get_position_along_axis(&helper_models->cubes.positions[model_index], &pos, ray, along_x, along_y, along_z);
+		Vector3 model_position = helper_models->cubes._positions[model_index];
+		uint8_t valid = get_position_along_axis(&model_position, &pos, ray, along_x, along_y, along_z);
 
 		if(valid) {
 			if(along_x) {
-				init_vector(&pos, pos.x, helper_models->cubes.positions[model_index].y, helper_models->cubes.positions[model_index].z);
+				init_vector(&pos, pos.x, model_position.y, model_position.z);
 			}
 			else if(along_y) {
-				init_vector(&pos, helper_models->cubes.positions[model_index].x, pos.y, helper_models->cubes.positions[model_index].z);
+				init_vector(&pos, model_position.x, pos.y, model_position.z);
 			}
 			else if(along_z) {
-				init_vector(&pos, helper_models->cubes.positions[model_index].x, helper_models->cubes.positions[model_index].y, pos.z);
+				init_vector(&pos, model_position.x, model_position.y, pos.z);
 			}
 	
 			translate_instanced_helper_model(&helper_models->cubes, model_index, pos.x, pos.y, pos.z);
@@ -338,17 +360,17 @@ static void scale_instanced_model_using_movesticks(HelperModels *helper_models, 
 
 		BoundingBox *hb = &helper_models->cubes.bounding_boxes[helper_models->active_helper_model_index];
 		Vector3 *ip = &instanced_model->positions[helper_models->active_instanced_model_index];
-		Vector3 *hp = &helper_models->cubes.positions[helper_models->active_helper_model_index];
+		Vector3 hp = helper_models->cubes._positions[helper_models->active_helper_model_index];
 
 		/* @Note: Here we are taking hb->width for all three dimensions because in all three movesticks only the width has been
 		 * scaled and the model rotated to y and z axes */
 		Vector3 new_pos;
 		if(helper_models->active_helper_model_index == 4)
-			init_vector(&new_pos, hp->x - hb->width / 2.0f - 0.2f, ip->y, ip->z);
+			init_vector(&new_pos, hp.x - hb->width / 2.0f - 0.2f, ip->y, ip->z);
 		else if(helper_models->active_helper_model_index == 5)
-			init_vector(&new_pos, ip->x, hp->y - hb->width / 2.0f - 0.2f, ip->z);
+			init_vector(&new_pos, ip->x, hp.y - hb->width / 2.0f - 0.2f, ip->z);
 		else if(helper_models->active_helper_model_index == 6)
-			init_vector(&new_pos, ip->x, ip->y, hp->z - hb->width / 2.0f - 0.2f);
+			init_vector(&new_pos, ip->x, ip->y, hp.z - hb->width / 2.0f - 0.2f);
 
 		Vector3 new_scale = { 0, 0, 0 };
 		if(helper_models->active_helper_model_index == 4) {
@@ -376,16 +398,16 @@ static void translate_instanced_model_using_movesticks(HelperModels *helper_mode
 
 		BoundingBox *ib = &instanced_model->bounding_boxes[helper_models->active_instanced_model_index];
 		Vector3 *ip = &instanced_model->positions[helper_models->active_instanced_model_index];
-		Vector3 *hp = &helper_models->cubes.positions[helper_models->active_helper_model_index];
+		Vector3 hp = helper_models->cubes._positions[helper_models->active_helper_model_index];
 
 		/* Moving instanced model */
 		Vector3 new_pos;
 		if(helper_models->active_helper_model_index == 4)
-			init_vector(&new_pos, hp->x - ib->width / 2.0f - 0.8f, ip->y, ip->z);
+			init_vector(&new_pos, hp.x - ib->width / 2.0f - 0.8f, ip->y, ip->z);
 		else if(helper_models->active_helper_model_index == 5)
-			init_vector(&new_pos, ip->x, hp->y - ib->height / 2.0f - 0.8f, ip->z);
+			init_vector(&new_pos, ip->x, hp.y - ib->height / 2.0f - 0.8f, ip->z);
 		else if(helper_models->active_helper_model_index == 6)
-			init_vector(&new_pos, ip->x, ip->y, hp->z - ib->depth / 2.0f - 0.8f);
+			init_vector(&new_pos, ip->x, ip->y, hp.z - ib->depth / 2.0f - 0.8f);
 		
 		translate_instanced_model(instanced_model, helper_models->active_instanced_model_index, new_pos.x, new_pos.y, new_pos.z);
 		/* Moving instanced model */
@@ -418,13 +440,16 @@ void rotate_helper_models_along(HelperModels *helper_models, uint32_t model_inde
 	else {
 		Vector3 pos_1, pos_2;
 		if(along_z) {
-			uint8_t valid_1 = get_position_along_axis(&helper_models->cubes.positions[model_index], &pos_1, ray, 1, 0, 0);
-			uint8_t valid_2 = get_position_along_axis(&helper_models->cubes.positions[model_index], &pos_2, ray, 0, 1, 0);
+			Vector3 model_position = helper_models->cubes._positions[model_index];
+			uint8_t valid_1 = get_position_along_axis(&model_position, &pos_1, ray, 1, 0, 0);
+			uint8_t valid_2 = get_position_along_axis(&model_position, &pos_2, ray, 0, 1, 0);
 			if(valid_1 && valid_2) {
 				Vector3 vec_1 = { 1, 0, 0 };
 				Vector3 vec_2 = { pos_1.x, pos_2.y, 0 };
 				float angle = angle_vectors(&vec_1, &vec_2);
 				angle = 360 - to_degrees(angle);
+
+				rotate_instanced_helper_model_about(&helper_models->cubes, 4, 0, 0, 1, model_position.x, model_position.y, model_position.z, angle);
 			}
 		}
 	}
@@ -447,7 +472,7 @@ void handle_mouse_movement_helper_models(HelperModels *helper_models, InstancedM
 }
 
 void handle_mouse_click_helper_models(HelperModels *helper_models, Vector *ray) {
-	uint32_t hit_index = obb(helper_models->cubes.models, helper_models->cubes.positions, helper_models->cubes.num_models, helper_models->cubes.bounding_boxes, ray);
+	uint32_t hit_index = obb(helper_models->cubes.models, helper_models->cubes.num_models, helper_models->cubes.bounding_boxes, ray);
 
 	if(hit_index != -1) {
 		if(helper_models->active_helper_model_index != -1) {
